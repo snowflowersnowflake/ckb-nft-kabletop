@@ -955,7 +955,7 @@ dependencies = [
  "ckb-rational 0.37.0",
  "failure",
  "merkle-cbt",
- "molecule",
+ "molecule 0.6.0",
  "numext-fixed-uint",
  "once_cell",
 ]
@@ -975,7 +975,7 @@ dependencies = [
  "ckb-occupied-capacity 0.39.1",
  "ckb-rational 0.39.1",
  "merkle-cbt",
- "molecule",
+ "molecule 0.6.0",
  "numext-fixed-uint",
  "once_cell",
 ]
@@ -1953,6 +1953,17 @@ checksum = "663f76cc52219e5957e2f5563cce9d89f98aa8503c9c898b5c412d97df663998"
 dependencies = [
  "bytes 0.5.6",
  "cfg-if 0.1.10",
+ "faster-hex 0.4.1",
+]
+
+[[package]]
+name = "molecule"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1234a806dbcac181c1fc7cb69757ee22c5935c2dd4a8cb2551519bba44d85c93"
+dependencies = [
+ "bytes 1.0.1",
+ "cfg-if 1.0.0",
  "faster-hex 0.4.1",
 ]
 
@@ -2957,7 +2968,7 @@ dependencies = [
  "futures 0.3.14",
  "hmac",
  "log",
- "molecule",
+ "molecule 0.6.0",
  "openssl",
  "openssl-sys",
  "rand 0.7.3",
@@ -2981,6 +2992,7 @@ dependencies = [
  "ckb-x64-simulator",
  "hex",
  "lazy_static",
+ "molecule 0.7.0",
  "serde_json",
 ]
 

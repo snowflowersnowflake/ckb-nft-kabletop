@@ -8,9 +8,9 @@
 #include "molecule/types.h"
 
 #define MAX_SCRIPT_SIZE 32768
-#define MAX_ROUND_SIZE 1024
-#define MAX_CHALLENGE_DATA_SIZE 1024
-#define MAX_OPERATIONS_PER_ROUND 256
+#define MAX_ROUND_SIZE 2048
+#define MAX_CHALLENGE_DATA_SIZE 2048
+#define MAX_OPERATIONS_PER_ROUND 16
 #define MAX_NFT_DATA_SIZE (BLAKE160_SIZE * 256)
 
 enum
@@ -146,6 +146,7 @@ int check_result(Kabletop *kabletop, int winner, const uint64_t ckbs[3], MODE mo
         // user1 is winner
         case USER_1: 
         {
+            ckb_debug("winner = user1");
             if (user1_ckb - user2_ckb > funding_ckb - staking_ckb * 2
                 || user1_ckb + user2_ckb < staking_ckb * 2)
             {
@@ -156,6 +157,7 @@ int check_result(Kabletop *kabletop, int winner, const uint64_t ckbs[3], MODE mo
         // user2 is winner
         case USER_2:
         {
+            ckb_debug("winner = user2");
             if (user2_ckb - user1_ckb > funding_ckb - staking_ckb * 2
                 || user2_ckb + user1_ckb < staking_ckb * 2)
             {
@@ -237,25 +239,9 @@ int verify_witnesses(Kabletop *kabletop, uint8_t witnesses[MAX_ROUND_SIZE][MAX_R
         return ERROR_PUBKEY_BLAKE160_HASH;
     }
 
-    // check round signatures, always start from lock_hash and capacity
-    uint8_t lock_hash[BLAKE2B_BLOCK_SIZE];
-    uint64_t len = BLAKE2B_BLOCK_SIZE;
-    ckb_load_cell_by_field(lock_hash, &len, 0, 0, CKB_SOURCE_GROUP_INPUT, CKB_CELL_FIELD_LOCK_HASH);
-
-    uint64_t capacity = 0;
-    len = sizeof(uint64_t);
-    ckb_load_cell_by_field(&capacity, &len, 0, 0, CKB_SOURCE_GROUP_INPUT, CKB_CELL_FIELD_CAPACITY);
-
-    blake2b_state blake2b_ctx;
-    blake2b_init(&blake2b_ctx, BLAKE2B_BLOCK_SIZE);
-    blake2b_update(&blake2b_ctx, lock_hash, BLAKE2B_BLOCK_SIZE);
-    blake2b_update(&blake2b_ctx, &capacity, sizeof(uint64_t));
-
-    uint8_t message[BLAKE2B_BLOCK_SIZE];
-    uint8_t signature[SIGNATURE_SIZE];
     int s = ckb_calculate_inputs_len();
     int e = s;
-    len = MAX_ROUND_SIZE;
+    uint64_t len = MAX_ROUND_SIZE;
     while (ckb_load_witness(witnesses[e-s], &len, 0, e, CKB_SOURCE_INPUT) != CKB_INDEX_OUT_OF_BOUND)
     {
         if (len > MAX_ROUND_SIZE)
@@ -269,14 +255,37 @@ int verify_witnesses(Kabletop *kabletop, uint8_t witnesses[MAX_ROUND_SIZE][MAX_R
     {
         return KABLETOP_EXCESSIVE_ROUNDS;
     }
+
+    // check round signatures, always start from lock_hash and capacity
+    uint8_t lock_hash[BLAKE2B_BLOCK_SIZE];
+    len = BLAKE2B_BLOCK_SIZE;
+    ckb_load_cell_by_field(lock_hash, &len, 0, 0, CKB_SOURCE_GROUP_INPUT, CKB_CELL_FIELD_LOCK_HASH);
+
+    uint64_t capacity = 0;
+    len = sizeof(uint64_t);
+    ckb_load_cell_by_field(&capacity, &len, 0, 0, CKB_SOURCE_GROUP_INPUT, CKB_CELL_FIELD_CAPACITY);
+
+    blake2b_state blake2b_ctx;
+    blake2b_init(&blake2b_ctx, BLAKE2B_BLOCK_SIZE);
+    blake2b_update(&blake2b_ctx, lock_hash, BLAKE2B_BLOCK_SIZE);
+    blake2b_update(&blake2b_ctx, &capacity, sizeof(uint64_t));
+
+    uint8_t message[BLAKE2B_BLOCK_SIZE];
     for (int i = 0; i < kabletop->round_count; ++i)
     {
+        if (i > 0)
+        {
+            blake2b_init(&blake2b_ctx, BLAKE2B_BLOCK_SIZE);
+            blake2b_update(&blake2b_ctx, message, BLAKE2B_BLOCK_SIZE);
+        }
         uint8_t *witness = witnesses[i];
+        len = MAX_ROUND_SIZE;
         ckb_load_witness(witness, &len, 0, i + s, CKB_SOURCE_INPUT);
+        // print_hex("witness", witness, len);
         // extract round signature from extra witness lock
-        mol_seg_t lock_bytes_seg;
-        CHECK_RET(extract_witness_lock(witness, len, &lock_bytes_seg));
-        if (lock_bytes_seg.size != SIGNATURE_SIZE)
+        mol_seg_t signature_seg;
+        CHECK_RET(extract_witness_lock(witness, len, &signature_seg));
+        if (signature_seg.size != SIGNATURE_SIZE)
         {
             return ERROR_ARGUMENTS_LEN;
         }
@@ -287,15 +296,11 @@ int verify_witnesses(Kabletop *kabletop, uint8_t witnesses[MAX_ROUND_SIZE][MAX_R
         {
             return KABLETOP_ROUND_FORMAT_ERROR;
         }
-        // move out signature from original witness lock to recover sign message
-        memcpy(signature, lock_bytes_seg.ptr, lock_bytes_seg.size);
-        memset((void *)lock_bytes_seg.ptr, 0, lock_bytes_seg.size);
-        // complete signature message
-        blake2b_update(&blake2b_ctx, (char *)&len, sizeof(uint64_t));
-        blake2b_update(&blake2b_ctx, witness, len);
+        // complete signature message with round data
+        blake2b_update(&blake2b_ctx, kabletop->rounds[i].ptr, kabletop->rounds[i].size);
         blake2b_final(&blake2b_ctx, message, BLAKE2B_BLOCK_SIZE);
         // recover pubkey blake160 hash
-        CHECK_RET(get_secp256k1_pubkey_blake160(pubkey_hash, signature, message, &blake2b_ctx));
+        CHECK_RET(get_secp256k1_pubkey_blake160(pubkey_hash, signature_seg.ptr, message));
         // check round owner
         if ((_user_type(kabletop, i) == USER_1 && memcmp(pubkey_hash, _user2_pkhash(kabletop), BLAKE160_SIZE) != 0)
             || (_user_type(kabletop, i) == USER_2 && memcmp(pubkey_hash, _user1_pkhash(kabletop), BLAKE160_SIZE) != 0))
@@ -303,7 +308,7 @@ int verify_witnesses(Kabletop *kabletop, uint8_t witnesses[MAX_ROUND_SIZE][MAX_R
             return KABLETOP_WRONG_USER_ROUND;
         }
         // fill round random seed and clone round molecule
-        memcpy(kabletop->seeds[i].randomseed, signature, sizeof(uint64_t) * 2);
+        memcpy(kabletop->seeds[i].randomseed, signature_seg.ptr, sizeof(uint64_t) * 2);
     }
     return CKB_SUCCESS;
 }

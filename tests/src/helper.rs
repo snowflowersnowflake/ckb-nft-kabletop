@@ -7,6 +7,7 @@ use ckb_tool::ckb_types::{
     prelude::*,
     H256,
 };
+use std::convert::TryInto;
 
 #[allow(dead_code)]
 pub const CODE_HASH_SECP256K1_BLAKE160: [u8; 32] = [
@@ -15,7 +16,7 @@ pub const CODE_HASH_SECP256K1_BLAKE160: [u8; 32] = [
 ];
 
 #[allow(dead_code)]
-pub const MAX_CYCLES: u64 = 10_000_000;
+pub const MAX_CYCLES: u64 = 100_000_000;
 
 #[allow(dead_code)]
 pub const TYPE: u8 = 1;
@@ -31,37 +32,37 @@ pub fn blake160(data: &[u8]) -> [u8; 20] {
     buf
 }
 
-pub fn gen_witnesses(kablecell: &CellOutput, raw_witness: Vec<(&Privkey, Bytes)>) -> Vec<packed::Bytes> {
+#[allow(dead_code)]
+pub fn gen_witnesses_and_signature(kablecell: &CellOutput, raw_witness: Vec<(&Privkey, Bytes)>) -> (Vec<WitnessArgs>, [u8; 65]) {
     let mut message = [0u8; 32];
     let mut witnesses = vec![];
-    let mut previous_code: Vec<&Bytes> = vec![];
-    for (privk, code) in &raw_witness {
+    let mut signature = vec![];
+    for i in 0..raw_witness.len() {
+        let (privk, code) = &raw_witness[i];
         let mut blake2b = new_blake2b();
-        blake2b.update(&kablecell.lock().calc_script_hash().raw_data());
-        blake2b.update(&kablecell.capacity().raw_data());
-        for prev_code in &previous_code {
-            blake2b.update(prev_code);
+        if i == 0 {
+            blake2b.update(&kablecell.lock().calc_script_hash().raw_data());
+            blake2b.update(&kablecell.capacity().raw_data());
+        } else {
+            blake2b.update(&message);
         }
+        // println!("round{} = {}, count = {}", i, hex::encode(&code), code.len());
         blake2b.update(&code);
         blake2b.finalize(&mut message);
-        let message = H256::from(message);
-        let sig = privk.sign_recoverable(&message).expect("sign");
-        witnesses.push(WitnessArgsBuilder::default()
+        let digest = H256::from(message);
+        let sig = privk.sign_recoverable(&digest).expect("sign");
+        witnesses.push(WitnessArgs::new_builder()
             .lock(Some(Bytes::from(sig.serialize())).pack())
             .input_type(Some(code.clone()).pack())
-            .build()
-            .as_bytes()
-            .pack());
-        previous_code.push(code);
+            .build());
+        signature = sig.serialize();
     }
-    witnesses
+    (witnesses, signature.try_into().unwrap())
 }
 
 #[allow(dead_code)]
-pub fn sign_tx(tx: TransactionView, key: &Privkey) -> TransactionView {
-    let witnesses_len = tx.witnesses().len();
+pub fn sign_tx(tx: TransactionView, key: &Privkey, extra_witnesses: Vec<WitnessArgs>) -> TransactionView {
     let tx_hash = tx.hash();
-    // println!("tx_hash = {:?}", hex::encode(tx_hash.raw_data()));
     let mut signed_witnesses: Vec<packed::Bytes> = Vec::new();
     let mut blake2b = new_blake2b();
     let mut message = [0u8; 32];
@@ -78,15 +79,17 @@ pub fn sign_tx(tx: TransactionView, key: &Privkey) -> TransactionView {
         .as_builder()
         .lock(Some(zero_lock).pack())
         .build();
-    // println!("witness = {:?}", hex::encode(witness_for_digest.as_bytes()));
     let witness_len = witness_for_digest.as_bytes().len() as u64;
     blake2b.update(&witness_len.to_le_bytes());
     blake2b.update(&witness_for_digest.as_bytes());
+    for witness in &extra_witnesses {
+        let witness_len = witness.as_bytes().len() as u64;
+        blake2b.update(&witness_len.to_le_bytes());
+        blake2b.update(&witness.as_bytes());
+    }
     blake2b.finalize(&mut message);
     let message = H256::from(message);
-    // println!("sign_message = {:?}", hex::encode(message.as_bytes()));
     let sig = key.sign_recoverable(&message).expect("sign");
-    // println!("sig = {:?}", hex::encode(&Bytes::from(sig.serialize())));
     signed_witnesses.push(
         witness
             .as_builder()
@@ -95,8 +98,9 @@ pub fn sign_tx(tx: TransactionView, key: &Privkey) -> TransactionView {
             .as_bytes()
             .pack(),
     );
-    for i in 1..witnesses_len {
-        signed_witnesses.push(tx.witnesses().get(i).unwrap());
+    for witness in &extra_witnesses {
+        signed_witnesses.push(witness.as_bytes().pack());
+        // println!("witness = {}", hex::encode(witness.as_bytes()));
     }
     tx.as_advanced_builder()
         .set_witnesses(signed_witnesses)

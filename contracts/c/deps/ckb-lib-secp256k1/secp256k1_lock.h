@@ -72,11 +72,24 @@ int extract_witness_input_type(uint8_t *witness, uint64_t len,
   return CKB_SUCCESS;
 }
 
+void print_hex(const char *prefix, unsigned char *msg, int size) {
+  char debug[1024] = "";
+  char x[16];
+  int j = 0;
+  for (int i = 0; i < size; ++i) {
+    sprintf(x, "%02x", (int)msg[i]);
+    memcpy(&debug[j], x, strlen(x));
+    j += strlen(x);
+  }
+  char print[2048];
+  sprintf(print, "%s = \"%s\"", prefix, debug);
+  ckb_debug(print);
+}
+
 int get_secp256k1_pubkey_blake160(
   unsigned char pubkey_hash_out[BLAKE160_SIZE],
   unsigned char lock_bytes[SIGNATURE_SIZE],
-  unsigned char message[BLAKE2B_BLOCK_SIZE],
-  blake2b_state *blake2b_ctx) {
+  unsigned char message[BLAKE2B_BLOCK_SIZE]) {
 
   unsigned char temp[TEMP_SIZE];
 
@@ -107,9 +120,10 @@ int get_secp256k1_pubkey_blake160(
     return ERROR_SECP_SERIALIZE_PUBKEY;
   }
 
-  blake2b_init(blake2b_ctx, BLAKE2B_BLOCK_SIZE);
-  blake2b_update(blake2b_ctx, temp, pubkey_size);
-  blake2b_final(blake2b_ctx, pubkey_hash_out, BLAKE2B_BLOCK_SIZE);
+  blake2b_state blake2b_ctx;
+  blake2b_init(&blake2b_ctx, BLAKE2B_BLOCK_SIZE);
+  blake2b_update(&blake2b_ctx, temp, pubkey_size);
+  blake2b_final(&blake2b_ctx, pubkey_hash_out, BLAKE2B_BLOCK_SIZE);
   return CKB_SUCCESS;
 }
 
@@ -205,7 +219,7 @@ int get_secp256k1_blake160_sighash_all(
   }
   blake2b_final(&blake2b_ctx, message, BLAKE2B_BLOCK_SIZE);
 
-  ret = get_secp256k1_pubkey_blake160(pubkey_hash_out, lock_bytes, message, &blake2b_ctx);
+  ret = get_secp256k1_pubkey_blake160(pubkey_hash_out, lock_bytes, message);
   if (ret != CKB_SUCCESS) {
     return ret;
   }
@@ -236,6 +250,5 @@ int verify_secp256k1_blake160_sighash_all(
 
   return 0;
 }
-
 
 #endif /* CKB_LOCK_UTILS_H_ */

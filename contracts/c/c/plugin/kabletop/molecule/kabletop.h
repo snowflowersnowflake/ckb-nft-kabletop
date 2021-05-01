@@ -24,9 +24,6 @@ extern "C" {
 
 #define                                 MolReader_uint8_t_verify(s, c)                  mol_verify_fixed_size(s, 1)
 #define                                 MolReader_uint8_t_get_nth0(s)                   mol_slice_by_offset(s, 0, 1)
-#define                                 MolReader_uint16_t_verify(s, c)                 mol_verify_fixed_size(s, 2)
-#define                                 MolReader_uint16_t_get_nth0(s)                  mol_slice_by_offset(s, 0, 1)
-#define                                 MolReader_uint16_t_get_nth1(s)                  mol_slice_by_offset(s, 1, 1)
 #define                                 MolReader_uint64_t_verify(s, c)                 mol_verify_fixed_size(s, 8)
 #define                                 MolReader_uint64_t_get_nth0(s)                  mol_slice_by_offset(s, 0, 1)
 #define                                 MolReader_uint64_t_get_nth1(s)                  mol_slice_by_offset(s, 1, 1)
@@ -197,11 +194,6 @@ MOLECULE_API_DECORATOR  mol_errno       MolReader_Challenge_verify              
 #define                                 MolBuilder_uint8_t_set_nth0(b, p)               mol_builder_set_byte_by_offset(b, 0, p)
 #define                                 MolBuilder_uint8_t_build(b)                     mol_builder_finalize_simple(b)
 #define                                 MolBuilder_uint8_t_clear(b)                     mol_builder_discard(b)
-#define                                 MolBuilder_uint16_t_init(b)                     mol_builder_initialize_fixed_size(b, 2)
-#define                                 MolBuilder_uint16_t_set_nth0(b, p)              mol_builder_set_byte_by_offset(b, 0, p)
-#define                                 MolBuilder_uint16_t_set_nth1(b, p)              mol_builder_set_byte_by_offset(b, 1, p)
-#define                                 MolBuilder_uint16_t_build(b)                    mol_builder_finalize_simple(b)
-#define                                 MolBuilder_uint16_t_clear(b)                    mol_builder_discard(b)
 #define                                 MolBuilder_uint64_t_init(b)                     mol_builder_initialize_fixed_size(b, 8)
 #define                                 MolBuilder_uint64_t_set_nth0(b, p)              mol_builder_set_byte_by_offset(b, 0, p)
 #define                                 MolBuilder_uint64_t_set_nth1(b, p)              mol_builder_set_byte_by_offset(b, 1, p)
@@ -381,7 +373,6 @@ MOLECULE_API_DECORATOR  mol_seg_res_t   MolBuilder_Challenge_build              
 #define ____ 0x00
 
 MOLECULE_API_DECORATOR const uint8_t MolDefault_uint8_t[1]       =  {____};
-MOLECULE_API_DECORATOR const uint8_t MolDefault_uint16_t[2]      =  {____, ____};
 MOLECULE_API_DECORATOR const uint8_t MolDefault_uint64_t[8]      =  {
     ____, ____, ____, ____, ____, ____, ____, ____,
 };

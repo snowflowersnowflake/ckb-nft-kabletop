@@ -2,6 +2,7 @@
 #include "inject.h"
 #include "blockchain.h"
 #include "core.h"
+#include <stdio.h>
 
 void import_user_nft(Kabletop *k, lua_State *L, _USER_NFT_F _user_nft, const char *name)
 {
@@ -57,8 +58,8 @@ int plugin_verify(lua_State *L, int herr)
     }
 
     // import all users nft collection
-    import_user_nft(&kabletop, L, _user1_nft, "NFT_USER1");
-    import_user_nft(&kabletop, L, _user2_nft, "NFT_USER2");
+    import_user_nft(&kabletop, L, _user1_nft, "_user1_nfts");
+    import_user_nft(&kabletop, L, _user2_nft, "_user2_nfts");
 
     // check lua operations
     for (uint8_t i = 0; i < kabletop.round_count; ++i)
@@ -66,7 +67,7 @@ int plugin_verify(lua_State *L, int herr)
         uint8_t count = _operations_count(&kabletop, i);
         for (uint8_t n = 0; n < count; ++n)
         {
-            lua_getglobal(L, "randomseed");
+            lua_getglobal(L, "_set_random_seed");
             lua_pushinteger(L, kabletop.seeds[i].randomseed[0]);
             lua_pushinteger(L, kabletop.seeds[i].randomseed[1]);
             lua_pcall(L, 2, 0, herr);
@@ -81,8 +82,7 @@ int plugin_verify(lua_State *L, int herr)
     }
 
     // check lua final state
-    lua_getglobal(L, "_battle_result");
-    lua_pcall(L, 0, 1, herr);
+    lua_getglobal(L, "_winner");
     int winner = lua_tointeger(L, -1);
     CHECK_RET(check_result(&kabletop, winner, capacities, mode));
 
