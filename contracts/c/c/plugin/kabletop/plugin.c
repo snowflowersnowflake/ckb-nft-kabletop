@@ -64,13 +64,13 @@ int plugin_verify(lua_State *L, int herr)
     // check lua operations
     for (uint8_t i = 0; i < kabletop.round_count; ++i)
     {
+        lua_getglobal(L, "_set_random_seed");
+        lua_pushinteger(L, kabletop.seeds[i].randomseed[0]);
+        lua_pushinteger(L, kabletop.seeds[i].randomseed[1]);
+        lua_pcall(L, 2, 0, herr);
         uint8_t count = _operations_count(&kabletop, i);
         for (uint8_t n = 0; n < count; ++n)
         {
-            lua_getglobal(L, "_set_random_seed");
-            lua_pushinteger(L, kabletop.seeds[i].randomseed[0]);
-            lua_pushinteger(L, kabletop.seeds[i].randomseed[1]);
-            lua_pcall(L, 2, 0, herr);
             Operation operation = _operation(&kabletop, i, n);
             if (luaL_loadbuffer(L, (const char *)operation.code, operation.size, "kabletop")
                 || lua_pcall(L, 0, 0, herr))

@@ -10,7 +10,7 @@
 #define MAX_SCRIPT_SIZE 32768
 #define MAX_ROUND_SIZE 2048
 #define MAX_CHALLENGE_DATA_SIZE 2048
-#define MAX_OPERATIONS_PER_ROUND 16
+#define MAX_OPERATIONS_PER_ROUND 32
 #define MAX_NFT_DATA_SIZE (BLAKE160_SIZE * 256)
 
 enum
@@ -25,6 +25,7 @@ enum
     KABLETOP_WRONG_ROUND_SIGNATURE,
     KABLETOP_CHALLENGE_FORMAT_ERROR,
     KABLETOP_SETTLEMENT_FORMAT_ERROR,
+    KABLETOP_RESULT_FORMAT_ERROR,
     KABLETOP_WRONG_LUA_CODE,
     KABLETOP_WRONG_BATTLE_RESULT,
     KABLETOP_WRONG_SINCE
@@ -141,36 +142,12 @@ int check_result(Kabletop *kabletop, int winner, const uint64_t ckbs[3], MODE mo
     uint64_t user2_ckb   = ckbs[USER_2];
     uint64_t funding_ckb = ckbs[USER_KABLETOP];
     uint64_t staking_ckb = _user_staking_ckb(kabletop);
-    switch (winner)
-    {
-        // user1 is winner
-        case USER_1: 
-        {
-            ckb_debug("winner = user1");
-            if (user1_ckb - user2_ckb > funding_ckb - staking_ckb * 2
-                || user1_ckb + user2_ckb < staking_ckb * 2)
-            {
-                return KABLETOP_SETTLEMENT_FORMAT_ERROR;
-            }
-            return CKB_SUCCESS;
-        }
-        // user2 is winner
-        case USER_2:
-        {
-            ckb_debug("winner = user2");
-            if (user2_ckb - user1_ckb > funding_ckb - staking_ckb * 2
-                || user2_ckb + user1_ckb < staking_ckb * 2)
-            {
-                return KABLETOP_SETTLEMENT_FORMAT_ERROR;
-            }
-            return CKB_SUCCESS;
-        }
-    }
 
     // check input SINCE wether matches the requirement when settling on no-winner result
-    if (mode == MODE_SETTLEMENT)
+    if (winner == 0 && mode == MODE_SETTLEMENT)
     {
-        if (kabletop->input_challenge.ptr == NULL)
+        uint8_t user_type = _input_challenge_user_type(kabletop);
+        if (user_type == 0 || user_type == kabletop->signer)
         {
             return KABLETOP_WRONG_BATTLE_RESULT;
         }
@@ -184,6 +161,41 @@ int check_result(Kabletop *kabletop, int winner, const uint64_t ckbs[3], MODE mo
         if (since < blocknumber + round_count * round_count)
         {
             return KABLETOP_WRONG_SINCE;
+        }
+        winner = kabletop->signer;
+    }
+
+    switch (winner)
+    {
+        // user1 is winner
+        case USER_1: 
+        {
+            ckb_debug("winner = user1");
+            if (user1_ckb - user2_ckb > funding_ckb - staking_ckb * 2
+                || user1_ckb + user2_ckb < staking_ckb * 2)
+            {
+                return KABLETOP_RESULT_FORMAT_ERROR;
+            }
+            return CKB_SUCCESS;
+        }
+        // user2 is winner
+        case USER_2:
+        {
+            ckb_debug("winner = user2");
+            if (user2_ckb - user1_ckb > funding_ckb - staking_ckb * 2
+                || user2_ckb + user1_ckb < staking_ckb * 2)
+            {
+                return KABLETOP_RESULT_FORMAT_ERROR;
+            }
+            return CKB_SUCCESS;
+        }
+        // lua global variable "_winner" is set to a wrong value while in settlement mode
+        default:
+        {
+            if (mode == MODE_SETTLEMENT)
+            {
+                return KABLETOP_WRONG_LUA_CODE;
+            }
         }
     }
 
@@ -212,7 +224,7 @@ int verify_lock_args(Kabletop *kabletop, uint8_t script[MAX_SCRIPT_SIZE])
     {
         return KABLETOP_ARGS_FORMAT_ERROR;
     }
-    // AUCTION: there should be some examination to ensure both users' nft count must
+    // CAUTION: there should be some examination to ensure both users' nft count must
     // be equal to _user_deck_size(kabletop), but this script is filled in lock_script
     // and will not run while creating the kabletop-cell, so the examination should be
     // implemented off-chain, especially by two of kabletop game clients
@@ -251,7 +263,7 @@ int verify_witnesses(Kabletop *kabletop, uint8_t witnesses[MAX_ROUND_SIZE][MAX_R
         e += 1;
     }
     kabletop->round_count = e - s;
-    if (kabletop->round_count > 256 || kabletop->round_count == 0)
+    if (kabletop->round_count > MAX_ROUND_COUNT || kabletop->round_count == 0)
     {
         return KABLETOP_EXCESSIVE_ROUNDS;
     }
@@ -270,20 +282,20 @@ int verify_witnesses(Kabletop *kabletop, uint8_t witnesses[MAX_ROUND_SIZE][MAX_R
     blake2b_update(&blake2b_ctx, lock_hash, BLAKE2B_BLOCK_SIZE);
     blake2b_update(&blake2b_ctx, &capacity, sizeof(uint64_t));
 
+    mol_seg_t signature_seg;
     uint8_t message[BLAKE2B_BLOCK_SIZE];
-    for (int i = 0; i < kabletop->round_count; ++i)
+    for (uint8_t i = 0; i < kabletop->round_count; ++i)
     {
         if (i > 0)
         {
             blake2b_init(&blake2b_ctx, BLAKE2B_BLOCK_SIZE);
             blake2b_update(&blake2b_ctx, message, BLAKE2B_BLOCK_SIZE);
+            blake2b_update(&blake2b_ctx, signature_seg.ptr, SIGNATURE_SIZE);
         }
         uint8_t *witness = witnesses[i];
         len = MAX_ROUND_SIZE;
         ckb_load_witness(witness, &len, 0, i + s, CKB_SOURCE_INPUT);
-        // print_hex("witness", witness, len);
         // extract round signature from extra witness lock
-        mol_seg_t signature_seg;
         CHECK_RET(extract_witness_lock(witness, len, &signature_seg));
         if (signature_seg.size != SIGNATURE_SIZE)
         {
@@ -299,15 +311,20 @@ int verify_witnesses(Kabletop *kabletop, uint8_t witnesses[MAX_ROUND_SIZE][MAX_R
         // complete signature message with round data
         blake2b_update(&blake2b_ctx, kabletop->rounds[i].ptr, kabletop->rounds[i].size);
         blake2b_final(&blake2b_ctx, message, BLAKE2B_BLOCK_SIZE);
-        // recover pubkey blake160 hash
-        CHECK_RET(get_secp256k1_pubkey_blake160(pubkey_hash, signature_seg.ptr, message));
-        // check round owner
-        if ((_user_type(kabletop, i) == USER_1 && memcmp(pubkey_hash, _user2_pkhash(kabletop), BLAKE160_SIZE) != 0)
-            || (_user_type(kabletop, i) == USER_2 && memcmp(pubkey_hash, _user1_pkhash(kabletop), BLAKE160_SIZE) != 0))
+        // CAUTION: the method "get_secp256k1_pubkey_blake160" is way too EXPENSIVE, so we just check
+        // two signatures from last TWO rounds of this game which contain both two users' confirmations
+        if (i + 2 >= kabletop->round_count)
         {
-            return KABLETOP_WRONG_USER_ROUND;
+            // recover pubkey blake160 hash
+            CHECK_RET(get_secp256k1_pubkey_blake160(pubkey_hash, signature_seg.ptr, message));
+            // check round owner
+            if ((_user_type(kabletop, i) == USER_1 && memcmp(pubkey_hash, _user2_pkhash(kabletop), BLAKE160_SIZE) != 0)
+                || (_user_type(kabletop, i) == USER_2 && memcmp(pubkey_hash, _user1_pkhash(kabletop), BLAKE160_SIZE) != 0))
+            {
+                return KABLETOP_WRONG_USER_ROUND;
+            }
         }
-        // fill round random seed and clone round molecule
+        // fill round random seed from first 16 bytes of round signature
         memcpy(kabletop->seeds[i].randomseed, signature_seg.ptr, sizeof(uint64_t) * 2);
     }
     return CKB_SUCCESS;
@@ -318,12 +335,17 @@ int verify_settlement_mode(Kabletop *kabletop, uint64_t capacities[3])
     const uint8_t *expect_code_hash = _lock_code_hash(kabletop);
     uint8_t lock_script[MAX_SCRIPT_SIZE];
     uint8_t user_checked[2] = {0, 0};
+    int ret = CKB_SUCCESS;
     for (size_t i = 0; 1; ++i)
     {
-        uint64_t len = BLAKE2B_BLOCK_SIZE;
+        uint64_t len = MAX_SCRIPT_SIZE;
         // filter cell by lock_script's code_hash
-        ckb_load_cell_by_field(lock_script, &len, 0, i, CKB_SOURCE_OUTPUT, CKB_CELL_FIELD_LOCK);
-        if (len > MAX_SCRIPT_SIZE)
+        ret = ckb_load_cell_by_field(lock_script, &len, 0, i, CKB_SOURCE_OUTPUT, CKB_CELL_FIELD_LOCK);
+        if (ret == CKB_INDEX_OUT_OF_BOUND)
+        {
+            break;
+        }
+        if (ret != CKB_SUCCESS || len > MAX_SCRIPT_SIZE)
         {
             return ERROR_ENCODING;
         }
@@ -346,13 +368,13 @@ int verify_settlement_mode(Kabletop *kabletop, uint64_t capacities[3])
         {
             user_checked[0] = 1;
             len = sizeof(uint64_t);
-            ckb_load_cell_by_field(&capacities[USER_1], &len, 0, i, CKB_SOURCE_OUTPUT, CKB_CELL_FIELD_CAPACITY);
+            CHECK_RET(ckb_load_cell_by_field(&capacities[USER_1], &len, 0, i, CKB_SOURCE_OUTPUT, CKB_CELL_FIELD_CAPACITY));
         }
         else if (memcmp(lock_args.ptr, _user2_pkhash(kabletop), BLAKE160_SIZE) == 0 && user_checked[1] == 0)
         {
             user_checked[1] = 1;
             len = sizeof(uint64_t);
-            ckb_load_cell_by_field(&capacities[USER_2], &len, 0, i, CKB_SOURCE_OUTPUT, CKB_CELL_FIELD_CAPACITY);
+            CHECK_RET(ckb_load_cell_by_field(&capacities[USER_2], &len, 0, i, CKB_SOURCE_OUTPUT, CKB_CELL_FIELD_CAPACITY));
         }
     }
     // check wether contain both of two users output cells
@@ -361,7 +383,7 @@ int verify_settlement_mode(Kabletop *kabletop, uint64_t capacities[3])
         return KABLETOP_SETTLEMENT_FORMAT_ERROR;
     }
     uint64_t len = sizeof(uint64_t);
-    ckb_load_cell_by_field(&capacities[USER_KABLETOP], &len, 0, 0, CKB_SOURCE_GROUP_INPUT, CKB_CELL_FIELD_CAPACITY);
+    CHECK_RET(ckb_load_cell_by_field(&capacities[USER_KABLETOP], &len, 0, 0, CKB_SOURCE_GROUP_INPUT, CKB_CELL_FIELD_CAPACITY));
     return CKB_SUCCESS;
 }
 

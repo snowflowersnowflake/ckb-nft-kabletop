@@ -90,6 +90,17 @@ Operation _operation(Kabletop *k, uint8_t r, uint8_t i)
     return op;
 }
 
+uint8_t _input_challenge_user_type(Kabletop *k)
+{
+    uint8_t user_type = 0;
+    if (k->input_challenge.ptr != NULL)
+    {
+        mol_seg_t round = _round(k, input);
+        user_type = *(uint8_t *)MolReader_Round_get_user_type(&round).ptr;
+    }
+    return user_type;
+}
+
 typedef uint8_t * _USER_NFT_F(Kabletop *, uint8_t);
 
 #endif

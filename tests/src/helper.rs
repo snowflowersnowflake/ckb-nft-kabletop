@@ -33,7 +33,7 @@ pub fn blake160(data: &[u8]) -> [u8; 20] {
 }
 
 #[allow(dead_code)]
-pub fn gen_witnesses_and_signature(kablecell: &CellOutput, raw_witness: Vec<(&Privkey, Bytes)>) -> (Vec<WitnessArgs>, [u8; 65]) {
+pub fn gen_witnesses_and_signature(script: &Script, ckb: u64, raw_witness: Vec<(&Privkey, Bytes)>) -> (Vec<WitnessArgs>, [u8; 65]) {
     let mut message = [0u8; 32];
     let mut witnesses = vec![];
     let mut signature = vec![];
@@ -41,10 +41,11 @@ pub fn gen_witnesses_and_signature(kablecell: &CellOutput, raw_witness: Vec<(&Pr
         let (privk, code) = &raw_witness[i];
         let mut blake2b = new_blake2b();
         if i == 0 {
-            blake2b.update(&kablecell.lock().calc_script_hash().raw_data());
-            blake2b.update(&kablecell.capacity().raw_data());
+            blake2b.update(&script.calc_script_hash().raw_data());
+            blake2b.update(&ckb.to_le_bytes());
         } else {
             blake2b.update(&message);
+            blake2b.update(&signature);
         }
         // println!("round{} = {}, count = {}", i, hex::encode(&code), code.len());
         blake2b.update(&code);
