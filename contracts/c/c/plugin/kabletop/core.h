@@ -26,7 +26,8 @@ enum
     KABLETOP_CHALLENGE_FORMAT_ERROR,
     KABLETOP_SETTLEMENT_FORMAT_ERROR,
     KABLETOP_RESULT_FORMAT_ERROR,
-    KABLETOP_WRONG_LUA_CODE,
+    KABLETOP_WRONG_LUA_CONTEXT_CODE,
+    KABLETOP_WRONG_LUA_OPERATION_CODE,
     KABLETOP_WRONG_BATTLE_RESULT,
     KABLETOP_WRONG_SINCE
 };
@@ -194,7 +195,7 @@ int check_result(Kabletop *kabletop, int winner, const uint64_t ckbs[3], MODE mo
         {
             if (mode == MODE_SETTLEMENT)
             {
-                return KABLETOP_WRONG_LUA_CODE;
+                return KABLETOP_WRONG_LUA_OPERATION_CODE;
             }
         }
     }
@@ -312,7 +313,7 @@ int verify_witnesses(Kabletop *kabletop, uint8_t witnesses[MAX_ROUND_SIZE][MAX_R
         blake2b_update(&blake2b_ctx, kabletop->rounds[i].ptr, kabletop->rounds[i].size);
         blake2b_final(&blake2b_ctx, message, BLAKE2B_BLOCK_SIZE);
         // CAUTION: the method "get_secp256k1_pubkey_blake160" is way too EXPENSIVE, so we just check
-        // two signatures from last TWO rounds of this game which contain both two users' confirmations
+        // two signatures from last TWO rounds of this game which already contain both two users' confirmation
         if (i + 2 >= kabletop->round_count)
         {
             // recover pubkey blake160 hash

@@ -4,6 +4,7 @@
 #include "blake2b.h"
 #include "include/secp256k1.h"
 #include "secp256k1_helper.h"
+#include "blockchain.h"
 
 #define BLAKE2B_BLOCK_SIZE 32
 #define BLAKE160_SIZE 20

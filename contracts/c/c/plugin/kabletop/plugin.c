@@ -15,12 +15,10 @@ void import_user_nft(Kabletop *k, lua_State *L, _USER_NFT_F _user_nft, const cha
     lua_setglobal(L, name);
 }
 
-int plugin_init(lua_State *L)
+int plugin_init(lua_State *L, int herr)
 {
     luaL_openlibs(L);
-    inject_kabletop_functions(L);
-
-    return 0;
+    return inject_kabletop_functions(L, herr);
 }
 
 int plugin_verify(lua_State *L, int herr)
@@ -72,11 +70,11 @@ int plugin_verify(lua_State *L, int herr)
         for (uint8_t n = 0; n < count; ++n)
         {
             Operation operation = _operation(&kabletop, i, n);
-            if (luaL_loadbuffer(L, (const char *)operation.code, operation.size, "kabletop")
+            if (luaL_loadbuffer(L, (const char *)operation.code, operation.size, "kabletop-running-operation")
                 || lua_pcall(L, 0, 0, herr))
             {
-                ckb_debug("Invalid lua script: please check your lua code.");
-                return KABLETOP_WRONG_LUA_CODE;
+                ckb_debug("Invalid lua script: please check operation code.");
+                return KABLETOP_WRONG_LUA_OPERATION_CODE;
             }
         }
     }

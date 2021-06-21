@@ -123,196 +123,196 @@ fn test_success_origin_to_challenge() {
     println!("consume cycles: {}", cycles);
 }
 
-#[test]
-fn test_success_origin_to_settlement() {
-    // deploy contract
-    let mut context = Context::default();
-    let contract_bin: Bytes = Loader::default().load_binary("kabletop");
-    let out_point = context.deploy_cell(contract_bin);
-    let secp256k1_data_bin = BUNDLED_CELL.get("specs/cells/secp256k1_data").unwrap();
-    let secp256k1_data_out_point = context.deploy_cell(secp256k1_data_bin.to_vec().into());
-    let secp256k1_data_dep = CellDep::new_builder()
-        .out_point(secp256k1_data_out_point)
-        .build();
-    let always_success_out_point = context.deploy_cell(ALWAYS_SUCCESS.clone());
-    let always_success_script_dep = CellDep::new_builder()
-        .out_point(always_success_out_point.clone())
-        .build();
+// #[test]
+// fn test_success_origin_to_settlement() {
+//     // deploy contract
+//     let mut context = Context::default();
+//     let contract_bin: Bytes = Loader::default().load_binary("kabletop");
+//     let out_point = context.deploy_cell(contract_bin);
+//     let secp256k1_data_bin = BUNDLED_CELL.get("specs/cells/secp256k1_data").unwrap();
+//     let secp256k1_data_out_point = context.deploy_cell(secp256k1_data_bin.to_vec().into());
+//     let secp256k1_data_dep = CellDep::new_builder()
+//         .out_point(secp256k1_data_out_point)
+//         .build();
+//     let always_success_out_point = context.deploy_cell(ALWAYS_SUCCESS.clone());
+//     let always_success_script_dep = CellDep::new_builder()
+//         .out_point(always_success_out_point.clone())
+//         .build();
 
-    // generate two users' privkey and pubkhash
-    let (user1_privkey, user1_pkhash) = get_keypair();
-    let (user2_privkey, user2_pkhash) = get_keypair();
+//     // generate two users' privkey and pubkhash
+//     let (user1_privkey, user1_pkhash) = get_keypair();
+//     let (user2_privkey, user2_pkhash) = get_keypair();
 
-    // prepare scripts
-    let code_hash: [u8; 32] = blake2b_256(ALWAYS_SUCCESS.to_vec());
-    let lock_args_molecule = (500u64, 5u8, 1024u64, code_hash, user1_pkhash, get_nfts(5), user2_pkhash, get_nfts(5));
-    let lock_args = protocol::lock_args(lock_args_molecule);
+//     // prepare scripts
+//     let code_hash: [u8; 32] = blake2b_256(ALWAYS_SUCCESS.to_vec());
+//     let lock_args_molecule = (500u64, 5u8, 1024u64, code_hash, user1_pkhash, get_nfts(5), user2_pkhash, get_nfts(5));
+//     let lock_args = protocol::lock_args(lock_args_molecule);
 
-    let lock_script = context
-        .build_script(&out_point, Bytes::from(protocol::to_vec(&lock_args)))
-        .expect("lock_script");
-    let lock_script_dep = CellDep::new_builder()
-        .out_point(out_point)
-        .build();
-    let user1_always_success_script = context
-        .build_script(&always_success_out_point, Bytes::from(user1_pkhash.to_vec()))
-        .expect("user1 always_success_script");
-    let user2_always_success_script = context
-        .build_script(&always_success_out_point, Bytes::from(user2_pkhash.to_vec()))
-        .expect("user2 always_success_script");
+//     let lock_script = context
+//         .build_script(&out_point, Bytes::from(protocol::to_vec(&lock_args)))
+//         .expect("lock_script");
+//     let lock_script_dep = CellDep::new_builder()
+//         .out_point(out_point)
+//         .build();
+//     let user1_always_success_script = context
+//         .build_script(&always_success_out_point, Bytes::from(user1_pkhash.to_vec()))
+//         .expect("user1 always_success_script");
+//     let user2_always_success_script = context
+//         .build_script(&always_success_out_point, Bytes::from(user2_pkhash.to_vec()))
+//         .expect("user2 always_success_script");
 
-    // prepare cells
-    let input_out_point = context.create_cell(
-        CellOutput::new_builder()
-            .capacity(2000u64.pack())
-            .lock(lock_script.clone())
-            .build(),
-        Bytes::new(),
-    );
-    let input = CellInput::new_builder()
-        .previous_output(input_out_point)
-        .build();
-    let outputs = vec![
-        CellOutput::new_builder()
-            .capacity(1500.pack())
-            .lock(user1_always_success_script.clone())
-            .build(),
-        CellOutput::new_builder()
-            .capacity(500.pack())
-            .lock(user2_always_success_script.clone())
-            .build()
-    ];
+//     // prepare cells
+//     let input_out_point = context.create_cell(
+//         CellOutput::new_builder()
+//             .capacity(2000u64.pack())
+//             .lock(lock_script.clone())
+//             .build(),
+//         Bytes::new(),
+//     );
+//     let input = CellInput::new_builder()
+//         .previous_output(input_out_point)
+//         .build();
+//     let outputs = vec![
+//         CellOutput::new_builder()
+//             .capacity(1500.pack())
+//             .lock(user1_always_success_script.clone())
+//             .build(),
+//         CellOutput::new_builder()
+//             .capacity(500.pack())
+//             .lock(user2_always_success_script.clone())
+//             .build()
+//     ];
 
-    // prepare witnesses
-    let end_round = protocol::round(2u8, vec![
-        "ckb.debug('user2 draw one card, and surrender the game.')".as_bytes(),
-        "_winner = 1".as_bytes()
-    ]);
-    let end_round_bytes = Bytes::from(protocol::to_vec(&end_round));
-    let witnesses = vec![
-        (&user2_privkey, get_round(1u8, "ckb.debug('user1 draw one card, and spell it adding HP.')")),
-        (&user1_privkey, get_round(2u8, "ckb.debug('user2 draw one card, and spell it to damage user1.')")),
-        (&user2_privkey, get_round(1u8, "ckb.debug('user1 draw one card, and use it to kill user2.')")),
-        (&user1_privkey, get_round(2u8, "ckb.debug('user2 draw one card, and put it onto battleground.')")),
-        (&user2_privkey, get_round(1u8, "ckb.debug('user1 draw one card, and use it to kill user2.')")),
-        (&user1_privkey, end_round_bytes),
-    ];
-    let (witnesses, _) = gen_witnesses_and_signature(&lock_script, 2000u64, witnesses);
-    let outputs_data = vec![Bytes::new(), Bytes::new()];
+//     // prepare witnesses
+//     let end_round = protocol::round(2u8, vec![
+//         "ckb.debug('user2 draw one card, and surrender the game.')".as_bytes(),
+//         "_winner = 1".as_bytes()
+//     ]);
+//     let end_round_bytes = Bytes::from(protocol::to_vec(&end_round));
+//     let witnesses = vec![
+//         (&user2_privkey, get_round(1u8, "ckb.debug('user1 draw one card, and spell it adding HP.')")),
+//         (&user1_privkey, get_round(2u8, "ckb.debug('user2 draw one card, and spell it to damage user1.')")),
+//         (&user2_privkey, get_round(1u8, "ckb.debug('user1 draw one card, and use it to kill user2.')")),
+//         (&user1_privkey, get_round(2u8, "ckb.debug('user2 draw one card, and put it onto battleground.')")),
+//         (&user2_privkey, get_round(1u8, "ckb.debug('user1 draw one card, and use it to kill user2.')")),
+//         (&user1_privkey, end_round_bytes),
+//     ];
+//     let (witnesses, _) = gen_witnesses_and_signature(&lock_script, 2000u64, witnesses);
+//     let outputs_data = vec![Bytes::new(), Bytes::new()];
 
-    // build transaction
-    let tx = TransactionBuilder::default()
-        .input(input)
-        .outputs(outputs)
-        .outputs_data(outputs_data.pack())
-        .cell_dep(lock_script_dep)
-        .cell_dep(secp256k1_data_dep)
-        .cell_dep(always_success_script_dep)
-        .build();
-    let tx = context.complete_tx(tx);
-    let tx = sign_tx(tx, &user1_privkey, witnesses);
+//     // build transaction
+//     let tx = TransactionBuilder::default()
+//         .input(input)
+//         .outputs(outputs)
+//         .outputs_data(outputs_data.pack())
+//         .cell_dep(lock_script_dep)
+//         .cell_dep(secp256k1_data_dep)
+//         .cell_dep(always_success_script_dep)
+//         .build();
+//     let tx = context.complete_tx(tx);
+//     let tx = sign_tx(tx, &user1_privkey, witnesses);
 
-    // run
-    let cycles = context
-        .verify_tx(&tx, MAX_CYCLES)
-        .expect("pass test_success_origin_to_settlement");
-    println!("consume cycles: {}", cycles);
-}
+//     // run
+//     let cycles = context
+//         .verify_tx(&tx, MAX_CYCLES)
+//         .expect("pass test_success_origin_to_settlement");
+//     println!("consume cycles: {}", cycles);
+// }
 
-#[test]
-fn test_success_timeout_to_settlement() {
-    // deploy contract
-    let mut context = Context::default();
-    let contract_bin: Bytes = Loader::default().load_binary("kabletop");
-    let out_point = context.deploy_cell(contract_bin);
-    let secp256k1_data_bin = BUNDLED_CELL.get("specs/cells/secp256k1_data").unwrap();
-    let secp256k1_data_out_point = context.deploy_cell(secp256k1_data_bin.to_vec().into());
-    let secp256k1_data_dep = CellDep::new_builder()
-        .out_point(secp256k1_data_out_point)
-        .build();
-    let always_success_out_point = context.deploy_cell(ALWAYS_SUCCESS.clone());
-    let always_success_script_dep = CellDep::new_builder()
-        .out_point(always_success_out_point.clone())
-        .build();
+// #[test]
+// fn test_success_timeout_to_settlement() {
+//     // deploy contract
+//     let mut context = Context::default();
+//     let contract_bin: Bytes = Loader::default().load_binary("kabletop");
+//     let out_point = context.deploy_cell(contract_bin);
+//     let secp256k1_data_bin = BUNDLED_CELL.get("specs/cells/secp256k1_data").unwrap();
+//     let secp256k1_data_out_point = context.deploy_cell(secp256k1_data_bin.to_vec().into());
+//     let secp256k1_data_dep = CellDep::new_builder()
+//         .out_point(secp256k1_data_out_point)
+//         .build();
+//     let always_success_out_point = context.deploy_cell(ALWAYS_SUCCESS.clone());
+//     let always_success_script_dep = CellDep::new_builder()
+//         .out_point(always_success_out_point.clone())
+//         .build();
 
-    // generate two users' privkey and pubkhash
-    let (user1_privkey, user1_pkhash) = get_keypair();
-    let (user2_privkey, user2_pkhash) = get_keypair();
+//     // generate two users' privkey and pubkhash
+//     let (user1_privkey, user1_pkhash) = get_keypair();
+//     let (user2_privkey, user2_pkhash) = get_keypair();
 
-    // prepare scripts
-    let code_hash: [u8; 32] = blake2b_256(ALWAYS_SUCCESS.to_vec());
-    let lock_args_molecule = (500u64, 5u8, 10000u64, code_hash, user1_pkhash, get_nfts(5), user2_pkhash, get_nfts(5));
-    let lock_args = protocol::lock_args(lock_args_molecule);
+//     // prepare scripts
+//     let code_hash: [u8; 32] = blake2b_256(ALWAYS_SUCCESS.to_vec());
+//     let lock_args_molecule = (500u64, 5u8, 10000u64, code_hash, user1_pkhash, get_nfts(5), user2_pkhash, get_nfts(5));
+//     let lock_args = protocol::lock_args(lock_args_molecule);
 
-    let lock_script = context
-        .build_script(&out_point, Bytes::from(protocol::to_vec(&lock_args)))
-        .expect("lock_script");
-    let lock_script_dep = CellDep::new_builder()
-        .out_point(out_point)
-        .build();
-    let user1_always_success_script = context
-        .build_script(&always_success_out_point, Bytes::from(user1_pkhash.to_vec()))
-        .expect("user1 always_success_script");
-    let user2_always_success_script = context
-        .build_script(&always_success_out_point, Bytes::from(user2_pkhash.to_vec()))
-        .expect("user2 always_success_script");
+//     let lock_script = context
+//         .build_script(&out_point, Bytes::from(protocol::to_vec(&lock_args)))
+//         .expect("lock_script");
+//     let lock_script_dep = CellDep::new_builder()
+//         .out_point(out_point)
+//         .build();
+//     let user1_always_success_script = context
+//         .build_script(&always_success_out_point, Bytes::from(user1_pkhash.to_vec()))
+//         .expect("user1 always_success_script");
+//     let user2_always_success_script = context
+//         .build_script(&always_success_out_point, Bytes::from(user2_pkhash.to_vec()))
+//         .expect("user2 always_success_script");
 
-    // prepare witnesses
-    let end_round = protocol::round(2u8, vec![
-        "ckb.debug('user2 draw one card, and quit the game without responding.')".as_bytes(),
-        // "_winner = 1".as_bytes()
-    ]);
-    let end_round_bytes = Bytes::from(protocol::to_vec(&end_round));
-    let witnesses = vec![
-        (&user2_privkey, get_round(1u8, "ckb.debug('user1 draw one card, and spell it adding HP.')")),
-        (&user1_privkey, get_round(2u8, "ckb.debug('user2 draw one card, and spell it to damage user1.')")),
-        (&user2_privkey, get_round(1u8, "ckb.debug('user1 draw one card, and use it to kill user2.')")),
-        (&user1_privkey, get_round(2u8, "ckb.debug('user2 draw one card, and put it onto battleground.')")),
-        (&user2_privkey, get_round(1u8, "ckb.debug('user1 draw one card, and use it to kill user2.')")),
-        (&user1_privkey, end_round_bytes),
-    ];
-    let (witnesses, signature) = gen_witnesses_and_signature(&lock_script, 2000u64, witnesses);
-    let challenge = protocol::challenge((witnesses.len() - 1) as u8, signature, end_round);
+//     // prepare witnesses
+//     let end_round = protocol::round(2u8, vec![
+//         "ckb.debug('user2 draw one card, and quit the game without responding.')".as_bytes(),
+//         // "_winner = 1".as_bytes()
+//     ]);
+//     let end_round_bytes = Bytes::from(protocol::to_vec(&end_round));
+//     let witnesses = vec![
+//         (&user2_privkey, get_round(1u8, "ckb.debug('user1 draw one card, and spell it adding HP.')")),
+//         (&user1_privkey, get_round(2u8, "ckb.debug('user2 draw one card, and spell it to damage user1.')")),
+//         (&user2_privkey, get_round(1u8, "ckb.debug('user1 draw one card, and use it to kill user2.')")),
+//         (&user1_privkey, get_round(2u8, "ckb.debug('user2 draw one card, and put it onto battleground.')")),
+//         (&user2_privkey, get_round(1u8, "ckb.debug('user1 draw one card, and use it to kill user2.')")),
+//         (&user1_privkey, end_round_bytes),
+//     ];
+//     let (witnesses, signature) = gen_witnesses_and_signature(&lock_script, 2000u64, witnesses);
+//     let challenge = protocol::challenge((witnesses.len() - 1) as u8, signature, end_round);
 
-    // prepare cells
-    let input_out_point = context.create_cell(
-        CellOutput::new_builder()
-            .capacity(2000u64.pack())
-            .lock(lock_script.clone())
-            .build(),
-        Bytes::from(protocol::to_vec(&challenge)),
-    );
-    let input = CellInput::new_builder()
-        .previous_output(input_out_point)
-        .since(10036u64.pack())
-        .build();
-    let outputs = vec![
-        CellOutput::new_builder()
-            .capacity(1500.pack())
-            .lock(user1_always_success_script.clone())
-            .build(),
-        CellOutput::new_builder()
-            .capacity(500.pack())
-            .lock(user2_always_success_script.clone())
-            .build()
-    ];
-    let outputs_data = vec![Bytes::new(), Bytes::new()];
+//     // prepare cells
+//     let input_out_point = context.create_cell(
+//         CellOutput::new_builder()
+//             .capacity(2000u64.pack())
+//             .lock(lock_script.clone())
+//             .build(),
+//         Bytes::from(protocol::to_vec(&challenge)),
+//     );
+//     let input = CellInput::new_builder()
+//         .previous_output(input_out_point)
+//         .since(10036u64.pack())
+//         .build();
+//     let outputs = vec![
+//         CellOutput::new_builder()
+//             .capacity(1500.pack())
+//             .lock(user1_always_success_script.clone())
+//             .build(),
+//         CellOutput::new_builder()
+//             .capacity(500.pack())
+//             .lock(user2_always_success_script.clone())
+//             .build()
+//     ];
+//     let outputs_data = vec![Bytes::new(), Bytes::new()];
 
-    // build transaction
-    let tx = TransactionBuilder::default()
-        .input(input)
-        .outputs(outputs)
-        .outputs_data(outputs_data.pack())
-        .cell_dep(lock_script_dep)
-        .cell_dep(secp256k1_data_dep)
-        .cell_dep(always_success_script_dep)
-        .build();
-    let tx = context.complete_tx(tx);
-    let tx = sign_tx(tx, &user1_privkey, witnesses);
+//     // build transaction
+//     let tx = TransactionBuilder::default()
+//         .input(input)
+//         .outputs(outputs)
+//         .outputs_data(outputs_data.pack())
+//         .cell_dep(lock_script_dep)
+//         .cell_dep(secp256k1_data_dep)
+//         .cell_dep(always_success_script_dep)
+//         .build();
+//     let tx = context.complete_tx(tx);
+//     let tx = sign_tx(tx, &user1_privkey, witnesses);
 
-    // run
-    let cycles = context
-        .verify_tx(&tx, MAX_CYCLES)
-        .expect("pass test_success_timeout_to_settlement");
-    println!("consume cycles: {}", cycles);
-}
+//     // run
+//     let cycles = context
+//         .verify_tx(&tx, MAX_CYCLES)
+//         .expect("pass test_success_timeout_to_settlement");
+//     println!("consume cycles: {}", cycles);
+// }

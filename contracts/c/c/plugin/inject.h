@@ -377,7 +377,7 @@ void inject_ckb_functions(lua_State *L)
     lua_setglobal(L, "ckb");
 
     // register global function
-    lua_register(L, "println", lua_println);
+    lua_register(L, "print", lua_println);
 }
 
 #endif

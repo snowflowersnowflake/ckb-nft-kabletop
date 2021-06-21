@@ -29,13 +29,12 @@ int main()
         ckb_clock = (ckb_clock << 8) | (lock_hash[i] >> 1);
     }
 
-    // Init lua status (or context) and inject into with ckb system functions
+    // Init lua status (or context)
     lua_State *L = luaL_newstate(ckb_time, ckb_clock);
-    plugin_init(L);
 
     // Load error handler for contract error print
     lua_pushcfunction(L, contract_error_handler);
     int herr = lua_gettop(L);
 
-    return plugin_verify(L, herr);
+    return plugin_init(L, herr) || plugin_verify(L, herr);
 }

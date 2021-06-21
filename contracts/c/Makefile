@@ -14,7 +14,7 @@ all: build/luavm build/kabletop
 build/luavm: build/entry.o build/luavm.o build/liblua.a
 	$(LD) $^ -o $@ $(LDFLAGS)
 
-build/kabletop: build/entry.o build/kabletop.o build/liblua.a
+build/kabletop: build/entry.o build/kabletop.o build/liblua.a build/luacode.o
 	$(LD) $^ -o $@ $(LDFLAGS)
 
 build/entry.o: c/entry.c
@@ -24,6 +24,9 @@ build/luavm.o: c/plugin/luavm/plugin.c
 	$(CC) $(APP_CFLAGS) $< -c -o $@
 
 build/kabletop.o: c/plugin/kabletop/plugin.c
+	$(CC) $(APP_CFLAGS) $< -c -o $@
+
+build/luacode.o: c/plugin/kabletop/luacode.c
 	$(CC) $(APP_CFLAGS) $< -c -o $@
 
 build/liblua.a:

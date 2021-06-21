@@ -6,7 +6,7 @@
 #define MAX_SCRIPT_SIZE 32768
 #define ERROR_LOADING_SCRIPT 4
 
-int plugin_init(lua_State *L)
+int plugin_init(lua_State *L, int herr)
 {
     luaL_openlibs(L);
     inject_luavm_functions(L);
