@@ -336,6 +336,9 @@ void inject_ckb_functions(lua_State *L)
         { NULL, NULL }
     };
 
+	// save current stack top
+	int stack_top = lua_gettop(L);
+
     // create ckb table
     luaL_newlib(L, ckb_syscall);
 
@@ -344,7 +347,7 @@ void inject_ckb_functions(lua_State *L)
     SET_FIELD(L, CKB_SUCCESS, "SUCCESS")
     SET_FIELD(L, -CKB_INDEX_OUT_OF_BOUND, "INDEX_OUT_OF_BOUND")
     SET_FIELD(L, -CKB_ITEM_MISSING, "ITEM_MISSING")
-    lua_setfield(L, 1, "code");
+    lua_setfield(L, stack_top + 1, "code");
 
     // create ckb.source table
     lua_newtable(L);
@@ -354,7 +357,7 @@ void inject_ckb_functions(lua_State *L)
     SET_FIELD(L, CKB_SOURCE_HEADER_DEP, "HEADER_DEP")
     SET_FIELD(L, CKB_SOURCE_GROUP_INPUT, "GROUP_INPUT")
     SET_FIELD(L, CKB_SOURCE_GROUP_OUTPUT, "GROUP_OUTPUT")
-    lua_setfield(L, 1, "source");
+    lua_setfield(L, stack_top + 1, "source");
 
     // create ckb.cell table
     lua_newtable(L);
@@ -365,13 +368,13 @@ void inject_ckb_functions(lua_State *L)
     SET_FIELD(L, CKB_CELL_FIELD_TYPE, "TYPE")
     SET_FIELD(L, CKB_CELL_FIELD_TYPE_HASH, "TYPE_HASH")
     SET_FIELD(L, CKB_CELL_FIELD_OCCUPIED_CAPACITY, "OCCUPIED_CAPACITY")
-    lua_setfield(L, 1, "cell");
+    lua_setfield(L, stack_top + 1, "cell");
 
     // create ckb.intput table
     lua_newtable(L);
     SET_FIELD(L, CKB_INPUT_FIELD_OUT_POINT, "OUT_POINT")
     SET_FIELD(L, CKB_INPUT_FIELD_SINCE, "SINCE")
-    lua_setfield(L, 1, "input");
+    lua_setfield(L, stack_top + 1, "input");
 
     // move ckb table to global
     lua_setglobal(L, "ckb");

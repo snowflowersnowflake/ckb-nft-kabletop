@@ -4,6 +4,7 @@
 
 #include "../inject.h"
 #include "core.h"
+#include "luacode.c"
 
 int inject_kabletop_functions(lua_State *L, int herr)
 {
@@ -16,9 +17,7 @@ int inject_kabletop_functions(lua_State *L, int herr)
         end                             \
     ");
 
-    extern const char *_GAME_CHUNK;
-    extern const unsigned int _GAME_CHUNK_SIZE;
-    if (luaL_loadbuffer(L, _GAME_CHUNK, _GAME_CHUNK_SIZE, "kabletop-context-init")
+    if (luaL_loadbuffer(L, (const char *)_GAME_CHUNK, _GAME_CHUNK_SIZE, "kabletop-context-init")
         || lua_pcall(L, 0, 0, herr))
     {
         ckb_debug("Invalid lua script: please check context code.");
