@@ -1,6 +1,8 @@
 {
     "files.associations": {
 		"stdio.h": "c",
-		"ckb_syscalls.h": "c"
+		"ckb_syscalls.h": "c",
+		"plugin.h": "c",
+		"ltime.h": "c"
 	}
 }
