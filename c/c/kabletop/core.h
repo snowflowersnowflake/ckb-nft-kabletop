@@ -96,7 +96,7 @@ void print_hex(const char *prefix, unsigned char *msg, int size)
 	ckb_debug(print);
 }
 
-int verify_witnesses(Kabletop *kabletop, uint8_t witnesses[MAX_ROUND_SIZE][MAX_ROUND_COUNT])
+int verify_witnesses(Kabletop *kabletop, uint8_t witnesses[MAX_ROUND_COUNT][MAX_ROUND_SIZE])
 {
     int ret = CKB_SUCCESS;
     int n = 0;

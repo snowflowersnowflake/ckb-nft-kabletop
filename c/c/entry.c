@@ -3,7 +3,7 @@
 int main()
 {
     // molecule buffers
-    uint8_t witnesses[MAX_ROUND_SIZE][MAX_ROUND_COUNT];
+    uint8_t witnesses[MAX_ROUND_COUNT][MAX_ROUND_SIZE];
 
     Kabletop kabletop;
     int ret = CKB_SUCCESS;
