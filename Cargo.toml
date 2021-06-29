@@ -1,9 +1,12 @@
-[workspace]
-members = ["tests"]
+[package]
+name = "molecule"
+version = "0.1.0"
+edition = "2018"
 
-[profile.release]
-overflow-checks = true
-opt-level = 's'
-lto = true
-codegen-units = 1
-panic = 'abort'
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ckb-tool = "0.3.0"
+ckb-testtool = "0.3.0"
+hex = "0.4"
+molecule = "0.7.0"
