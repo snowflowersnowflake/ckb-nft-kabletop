@@ -25,8 +25,8 @@ int plugin_verify(lua_State *L, int herr)
 {
     // molecule buffers
     uint8_t script[MAX_SCRIPT_SIZE];
-    uint8_t witnesses[MAX_ROUND_SIZE][MAX_ROUND_COUNT];
-    uint8_t challenge_data[MAX_CHALLENGE_DATA_SIZE][2];
+    uint8_t witnesses[MAX_ROUND_COUNT][MAX_ROUND_SIZE];
+    uint8_t challenge_data[2][MAX_CHALLENGE_DATA_SIZE];
 
     Kabletop kabletop;
     int ret = CKB_SUCCESS;

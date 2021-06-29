@@ -39,7 +39,7 @@ typedef enum
     MODE_UNKNOWN
 } MODE;
 
-MODE check_mode(Kabletop *kabletop, uint8_t challenge_data[MAX_CHALLENGE_DATA_SIZE][2])
+MODE check_mode(Kabletop *kabletop, uint8_t challenge_data[2][MAX_CHALLENGE_DATA_SIZE])
 {
     uint8_t expect_lock_hash[BLAKE2B_BLOCK_SIZE];
     uint64_t len = BLAKE2B_BLOCK_SIZE;
@@ -226,7 +226,7 @@ int verify_lock_args(Kabletop *kabletop, uint8_t script[MAX_SCRIPT_SIZE])
     return CKB_SUCCESS;
 }
 
-int verify_witnesses(Kabletop *kabletop, uint8_t witnesses[MAX_ROUND_SIZE][MAX_ROUND_COUNT])
+int verify_witnesses(Kabletop *kabletop, uint8_t witnesses[MAX_ROUND_COUNT][MAX_ROUND_SIZE])
 {
     uint8_t pubkey_hash[BLAKE160_SIZE];
     int ret = CKB_SUCCESS;

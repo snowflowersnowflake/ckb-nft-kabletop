@@ -23,6 +23,7 @@ build/kabletop: build/entry.o build/kabletop.o build/liblua.a
 	$(STRIP) $@
 
 build/entry.o: c/entry.c
+	mkdir -p build
 	$(CC) $(APP_CFLAGS) $< -c -o $@
 
 build/luavm.o: c/plugin/luavm/plugin.c
