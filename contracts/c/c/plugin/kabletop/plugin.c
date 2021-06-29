@@ -25,8 +25,8 @@ int plugin_verify(lua_State *L, int herr)
 {
     // molecule buffers
     uint8_t script[MAX_SCRIPT_SIZE];
-    uint8_t witnesses[MAX_ROUND_SIZE][MAX_ROUND_COUNT];
-    uint8_t challenge_data[MAX_CHALLENGE_DATA_SIZE][2];
+    uint8_t witnesses[MAX_ROUND_COUNT][MAX_ROUND_SIZE];
+    uint8_t challenge_data[2][MAX_CHALLENGE_DATA_SIZE];
 
     Kabletop kabletop;
     int ret = CKB_SUCCESS;
@@ -73,7 +73,9 @@ int plugin_verify(lua_State *L, int herr)
             if (luaL_loadbuffer(L, (const char *)operation.code, operation.size, "kabletop-running-operation")
                 || lua_pcall(L, 0, 0, herr))
             {
-                ckb_debug("Invalid lua script: please check operation code.");
+				char error[512] = "";
+				sprintf(error, "Invalid lua script: please check operation code [%u-%u].", i, n);
+				ckb_debug(error);
                 return KABLETOP_WRONG_LUA_OPERATION_CODE;
             }
         }

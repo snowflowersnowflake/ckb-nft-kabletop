@@ -35,9 +35,8 @@ fn get_nfts(count: u8) -> Vec<[u8; 20]> {
     return nfts;
 }
 
-fn get_round(user_type: u8, lua_code: &str) -> Bytes {
-    let lua_code = lua_code.as_bytes();
-    let user_round = protocol::round(user_type, vec![lua_code]);
+fn get_round(user_type: u8, lua_code: Vec<&str>) -> Bytes {
+    let user_round = protocol::round(user_type, lua_code);
     Bytes::from(protocol::to_vec(&user_round))
 }
 
@@ -88,18 +87,35 @@ fn test_success_origin_to_challenge() {
         .build();
 
     // prepare witnesses
-    let end_round = protocol::round(2u8, vec![
-        "ckb.debug('user2 draw one card, and skip current round.')".as_bytes(),
-        // "_winner = 1".as_bytes()
+    let end_round = protocol::round(1u8, vec![
+        "print('user2 draw one card, and skip current round.')",
+        // "_winner = 1"
     ]);
     let end_round_bytes = Bytes::from(protocol::to_vec(&end_round));
     let witnesses = vec![
-        (&user2_privkey, get_round(1u8, "ckb.debug('user1 draw one card, and then put it onto battleground.')")),
-        (&user1_privkey, get_round(2u8, "ckb.debug('user2 draw one card, and spell it to damage user1.')")),
-        (&user2_privkey, get_round(1u8, "ckb.debug('user1 draw one card, and damage user2.')")),
-        (&user1_privkey, get_round(2u8, "ckb.debug('user2 draw one card, and put it onto battleground.')")),
-        (&user2_privkey, get_round(1u8, "spell_card('user1', 'user2', '36248218d2808d668ae3c0d35990c12712f6b9d2')")),
-        (&user1_privkey, end_round_bytes),
+        (&user2_privkey, get_round(1u8, vec!["
+			print('用户1的回合：')
+			print('1.抽牌')
+			print('2.回合结束')
+		"])),
+        (&user1_privkey, get_round(2u8, vec!["
+			print('用户2的回合：')
+			print('1.抽牌')
+			print('2.放置一张牌，跳过回合')
+			print('3.回合结束')
+		"])),
+        (&user2_privkey, get_round(1u8, vec!["
+			print('用户1的回合：')
+			spell('用户1', '用户2', '36248218d2808d668ae3c0d35990c12712f6b9d2')
+			print('abc123abc123abc123abc123abc123abc123abc123abc123')
+			print('2.回合结束')
+		"])),
+        (&user1_privkey, get_round(2u8, vec!["
+			print('用户2的回合：')
+			print('1.认输')
+			print('2.回合结束')
+		"])),
+        (&user2_privkey, end_round_bytes),
     ];
     let (witnesses, signature) = gen_witnesses_and_signature(&lock_script, 2000u64, witnesses);
     let challenge = protocol::challenge((witnesses.len() - 1) as u8, signature, end_round);
@@ -185,16 +201,16 @@ fn test_success_origin_to_settlement() {
 
     // prepare witnesses
     let end_round = protocol::round(2u8, vec![
-        "ckb.debug('user2 draw one card, and surrender the game.')".as_bytes(),
-        "_winner = 1".as_bytes()
+        "ckb.debug('user2 draw one card, and surrender the game.')",
+        "_winner = 1"
     ]);
     let end_round_bytes = Bytes::from(protocol::to_vec(&end_round));
     let witnesses = vec![
-        (&user2_privkey, get_round(1u8, "ckb.debug('user1 draw one card, and spell it adding HP.')")),
-        (&user1_privkey, get_round(2u8, "ckb.debug('user2 draw one card, and spell it to damage user1.')")),
-        (&user2_privkey, get_round(1u8, "ckb.debug('user1 draw one card, and use it to kill user2.')")),
-        (&user1_privkey, get_round(2u8, "ckb.debug('user2 draw one card, and put it onto battleground.')")),
-        (&user2_privkey, get_round(1u8, "ckb.debug('user1 draw one card, and use it to kill user2.')")),
+        (&user2_privkey, get_round(1u8, vec!["ckb.debug('user1 draw one card, and spell it adding HP.')"])),
+        (&user1_privkey, get_round(2u8, vec!["ckb.debug('user2 draw one card, and spell it to damage user1.')"])),
+        (&user2_privkey, get_round(1u8, vec!["ckb.debug('user1 draw one card, and use it to kill user2.')]"])),
+        (&user1_privkey, get_round(2u8, vec!["ckb.debug('user2 draw one card, and put it onto battleground.')"])),
+        (&user2_privkey, get_round(1u8, vec!["ckb.debug('user1 draw one card, and use it to kill user2.')"])),
         (&user1_privkey, end_round_bytes),
     ];
     let (witnesses, _) = gen_witnesses_and_signature(&lock_script, 2000u64, witnesses);
@@ -259,16 +275,16 @@ fn test_success_timeout_to_settlement() {
 
     // prepare witnesses
     let end_round = protocol::round(2u8, vec![
-        "ckb.debug('user2 draw one card, and quit the game without responding.')".as_bytes(),
-        // "_winner = 1".as_bytes()
+        "ckb.debug('user2 draw one card, and quit the game without responding.')",
+        // "_winner = 1"
     ]);
     let end_round_bytes = Bytes::from(protocol::to_vec(&end_round));
     let witnesses = vec![
-        (&user2_privkey, get_round(1u8, "ckb.debug('user1 draw one card, and spell it adding HP.')")),
-        (&user1_privkey, get_round(2u8, "ckb.debug('user2 draw one card, and spell it to damage user1.')")),
-        (&user2_privkey, get_round(1u8, "ckb.debug('user1 draw one card, and use it to kill user2.')")),
-        (&user1_privkey, get_round(2u8, "ckb.debug('user2 draw one card, and put it onto battleground.')")),
-        (&user2_privkey, get_round(1u8, "ckb.debug('user1 draw one card, and use it to kill user2.')")),
+        (&user2_privkey, get_round(1u8, vec!["ckb.debug('user1 draw one card, and spell it adding HP.')"])),
+        (&user1_privkey, get_round(2u8, vec!["ckb.debug('user2 draw one card, and spell it to damage user1.')"])),
+        (&user2_privkey, get_round(1u8, vec!["ckb.debug('user1 draw one card, and use it to kill user2.')"])),
+        (&user1_privkey, get_round(2u8, vec!["ckb.debug('user2 draw one card, and put it onto battleground.')"])),
+        (&user2_privkey, get_round(1u8, vec!["ckb.debug('user1 draw one card, and use it to kill user2.')"])),
         (&user1_privkey, end_round_bytes),
     ];
     let (witnesses, signature) = gen_witnesses_and_signature(&lock_script, 2000u64, witnesses);

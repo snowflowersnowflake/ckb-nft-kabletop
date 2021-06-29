@@ -36,5 +36,9 @@ int main()
     lua_pushcfunction(L, contract_error_handler);
     int herr = lua_gettop(L);
 
-    return plugin_init(L, herr) || plugin_verify(L, herr);
+	int ret = 0;
+	CHECK_RET(plugin_init(L, herr));
+	CHECK_RET(plugin_verify(L, herr));
+
+    return ret;
 }
