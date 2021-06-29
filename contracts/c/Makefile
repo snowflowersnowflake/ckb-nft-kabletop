@@ -2,7 +2,8 @@ TARGET := riscv64-unknown-elf
 CC := $(TARGET)-gcc
 LD := $(TARGET)-gcc
 STRIP := $(TARGET)-strip
-CFLAGS := -Os -DCKB_NO_MMU -D__riscv_soft_float -D__riscv_float_abi_soft -DCKB_C_STDLIB_PRINTF -fvisibility=hidden
+# CFLAGS := -Os -DCKB_NO_MMU -D__riscv_soft_float -D__riscv_float_abi_soft -DCKB_C_STDLIB_PRINTF -fvisibility=hidden
+CFLAGS := -fPIC -Os -fno-builtin-memcmp -fno-builtin-printf -nostdlib -nostartfiles -fvisibility=hidden
 SECP256k1 := deps/ckb-lib-secp256k1
 STDLIB := deps/ckb-c-stdlib
 APP_CFLAGS := $(CFLAGS) -Ilua -Ic -I$(STDLIB) -I$(STDLIB)/molecule -I$(SECP256k1) -I$(SECP256k1)/secp256k1 -I$(SECP256k1)/secp256k1/src -Wall -Werror -Wno-unused-function -Wno-nonnull-compare -Wno-unused-value

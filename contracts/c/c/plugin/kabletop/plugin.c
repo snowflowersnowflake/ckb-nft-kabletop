@@ -70,11 +70,14 @@ int plugin_verify(lua_State *L, int herr)
         for (uint8_t n = 0; n < count; ++n)
         {
             Operation operation = _operation(&kabletop, i, n);
+			print_hex("[code]", operation.code, operation.size);
             if (luaL_loadbuffer(L, (const char *)operation.code, operation.size, "kabletop-running-operation")
                 || lua_pcall(L, 0, 0, herr))
             {
-                ckb_debug("Invalid lua script: please check operation code.");
-                return KABLETOP_WRONG_LUA_OPERATION_CODE;
+				char error[512] = "";
+				sprintf(error, "Invalid lua script: please check operation code [%u-%u].", i, n);
+				ckb_debug(error);
+                // return KABLETOP_WRONG_LUA_OPERATION_CODE;
             }
         }
     }

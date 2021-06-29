@@ -39,12 +39,6 @@ typedef enum
     MODE_UNKNOWN
 } MODE;
 
-#define CHECK_RET(x)          \
-    ret = x;                  \
-    if (ret != CKB_SUCCESS) { \
-        return ret;           \
-    }
-
 MODE check_mode(Kabletop *kabletop, uint8_t challenge_data[MAX_CHALLENGE_DATA_SIZE][2])
 {
     uint8_t expect_lock_hash[BLAKE2B_BLOCK_SIZE];

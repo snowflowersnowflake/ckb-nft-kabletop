@@ -80,10 +80,14 @@ pub fn lock_args(raw: (u64, u8, u64, [u8; 32], [u8; 20], Vec<[u8; 20]>, [u8; 20]
 }
 
 #[allow(dead_code)]
-pub fn round(user_type: u8, operations: Vec<&[u8]>) -> Round {
+pub fn round(user_type: u8, operations: Vec<&str>) -> Round {
     let operations = operations
         .iter()
-        .map(|bytes| bytes_t(bytes))
+        .map(|bytes| {
+			// println!("{}", bytes);
+			// println!("[code] = {}", hex::encode(bytes.as_bytes()));
+			bytes_t(bytes.as_bytes())
+		})
         .collect::<Vec<kabletop::Bytes>>();
     let operations = Operations::new_builder()
         .set(operations)
