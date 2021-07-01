@@ -111,13 +111,13 @@ MODE check_mode(Kabletop *kabletop, uint8_t challenge_data[2][MAX_CHALLENGE_DATA
     }
 }
 
-int check_last_round_signature(Kabletop *k, const uint8_t *expect_signature)
+int check_round_signature(Kabletop *k, uint8_t round_offset, const uint8_t *expect_signature)
 {
     uint64_t len = MAX_ROUND_SIZE;
     uint8_t witness[MAX_ROUND_SIZE];
     int ret = CKB_SUCCESS;
     int offset = ckb_calculate_inputs_len();
-    CHECK_RET(ckb_load_witness(witness, &len, 0, offset + k->round_count - 1, CKB_SOURCE_INPUT));
+    CHECK_RET(ckb_load_witness(witness, &len, 0, offset + round_offset, CKB_SOURCE_INPUT));
     if (len > MAX_ROUND_SIZE)
     {
         return ERROR_ENCODING;
@@ -379,21 +379,39 @@ int verify_settlement_mode(Kabletop *kabletop, uint64_t capacities[3])
     }
     uint64_t len = sizeof(uint64_t);
     CHECK_RET(ckb_load_cell_by_field(&capacities[USER_KABLETOP], &len, 0, 0, CKB_SOURCE_GROUP_INPUT, CKB_CELL_FIELD_CAPACITY));
+	// check challenge data matches current rounds if channel has been challenged before
+	if (kabletop->input_challenge.ptr)
+	{
+		uint8_t round_offset = _round_offset(kabletop, input);
+		int ret = check_round_signature(kabletop, round_offset, _signature(kabletop, input));
+		if (ret != CKB_SUCCESS)
+		{
+			return KABLETOP_SETTLEMENT_FORMAT_ERROR;
+		}
+		mol_seg_t round = kabletop->rounds[round_offset];
+		mol_seg_t challenge_round = _round(kabletop, input);
+		if (round.size != challenge_round.size
+			|| memcmp(round.ptr, challenge_round.ptr, round.size) != 0)
+		{
+			return KABLETOP_SETTLEMENT_FORMAT_ERROR;
+		}
+	}
     return CKB_SUCCESS;
 }
 
 int verify_challenge_mode(Kabletop *kabletop)
 {
-    if (_round_offset(kabletop, output) != kabletop->round_count - 1)
+	uint8_t round_offset = kabletop->round_count - 1;
+    if (_round_offset(kabletop, output) != round_offset)
     {
         return KABLETOP_CHALLENGE_FORMAT_ERROR;
     }
-    int ret = check_last_round_signature(kabletop, _signature(kabletop, output));
+    int ret = check_round_signature(kabletop, round_offset, _signature(kabletop, output));
     if (ret != CKB_SUCCESS)
     {
         return KABLETOP_CHALLENGE_FORMAT_ERROR;
     }
-    mol_seg_t last_round = kabletop->rounds[kabletop->round_count - 1];
+    mol_seg_t last_round = kabletop->rounds[round_offset];
     mol_seg_t challenge_round = _round(kabletop, output);
     if (last_round.size != challenge_round.size
         || memcmp(last_round.ptr, challenge_round.ptr, last_round.size) != 0)
