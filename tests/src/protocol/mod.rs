@@ -49,6 +49,14 @@ fn nfts_t(v: Vec<[u8; 20]>) -> kabletop::Nfts {
     kabletop::NftsBuilder::default().set(blake160s).build()
 }
 
+fn hashes_t(v: Vec<[u8; 32]>) -> kabletop::Hashes {
+    let hashes = v
+        .into_iter()
+        .map(&|hash| blake256_t(hash))
+        .collect::<Vec<_>>();
+    kabletop::HashesBuilder::default().set(hashes).build()
+}
+
 fn bytes_t(v: &[u8]) -> kabletop::Bytes {
     let bytes = v
         .to_vec()
@@ -66,12 +74,15 @@ pub fn to_vec<T: Entity>(t: &T) -> Vec<u8> {
 }
 
 #[allow(dead_code)]
-pub fn lock_args(raw: (u64, u8, u64, [u8; 32], [u8; 20], Vec<[u8; 20]>, [u8; 20], Vec<[u8; 20]>)) -> Args {
+pub fn lock_args(
+	raw: (u64, u8, u64, [u8; 32], [u8; 20], Vec<[u8; 20]>, [u8; 20], Vec<[u8; 20]>), luacode_hashes: Vec<[u8; 32]>
+) -> Args {
     Args::new_builder()
         .user_staking_ckb(uint64_t(raw.0))
         .user_deck_size(uint8_t(raw.1))
         .begin_blocknumber(uint64_t(raw.2))
         .lock_code_hash(blake256_t(raw.3))
+		.lua_code_hashes(hashes_t(luacode_hashes))
         .user1_pkhash(blake160_t(raw.4))
         .user1_nfts(nfts_t(raw.5))
         .user2_pkhash(blake160_t(raw.6))

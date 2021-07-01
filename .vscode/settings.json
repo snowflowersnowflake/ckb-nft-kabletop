@@ -3,6 +3,7 @@
 		"stdio.h": "c",
 		"ckb_syscalls.h": "c",
 		"plugin.h": "c",
-		"ltime.h": "c"
+		"ltime.h": "c",
+		"ckb_consts.h": "c"
 	}
 }

@@ -59,6 +59,9 @@ int plugin_verify(lua_State *L, int herr)
     import_user_nft(&kabletop, L, _user1_nft, "_user1_nfts");
     import_user_nft(&kabletop, L, _user2_nft, "_user2_nfts");
 
+	// load lua codes from celldep which match the hashes from kabletop_args
+	CHECK_RET(inject_celldep_functions(&kabletop, L, herr));
+
     // check lua operations
     for (uint8_t i = 0; i < kabletop.round_count; ++i)
     {

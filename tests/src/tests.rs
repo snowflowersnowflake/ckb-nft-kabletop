@@ -51,11 +51,12 @@ fn test_success_origin_to_challenge() {
     let secp256k1_data_dep = CellDep::new_builder()
         .out_point(secp256k1_data_out_point)
         .build();
-	let luacode_out_point = context.deploy_cell("kabletop:
+	let luacode = "
 		function surrender(prefix)
 			print(prefix .. 'surrender the game')
 		end
-	".as_bytes().into());
+	".as_bytes();
+	let luacode_out_point = context.deploy_cell(luacode.into());
 	let luacode_dep = CellDep::new_builder()
 		.out_point(luacode_out_point)
 		.build();
@@ -69,7 +70,7 @@ fn test_success_origin_to_challenge() {
 
     // prepare scripts
     let lock_args_molecule = (500u64, 5u8, 1024u64, blake2b_256([1]), user1_pkhash, get_nfts(5), user2_pkhash, get_nfts(5));
-    let lock_args = protocol::lock_args(lock_args_molecule);
+    let lock_args = protocol::lock_args(lock_args_molecule, vec![blake2b_256(luacode)]);
 
     let lock_script = context
         .build_script(&out_point, Bytes::from(protocol::to_vec(&lock_args)))
@@ -171,7 +172,7 @@ fn test_success_origin_to_settlement() {
     // prepare scripts
     let code_hash: [u8; 32] = blake2b_256(ALWAYS_SUCCESS.to_vec());
     let lock_args_molecule = (500u64, 5u8, 1024u64, code_hash, user1_pkhash, get_nfts(5), user2_pkhash, get_nfts(5));
-    let lock_args = protocol::lock_args(lock_args_molecule);
+    let lock_args = protocol::lock_args(lock_args_molecule, vec![]);
 
     let lock_script = context
         .build_script(&out_point, Bytes::from(protocol::to_vec(&lock_args)))
@@ -267,7 +268,7 @@ fn test_success_timeout_to_settlement() {
     // prepare scripts
     let code_hash: [u8; 32] = blake2b_256(ALWAYS_SUCCESS.to_vec());
     let lock_args_molecule = (500u64, 5u8, 10000u64, code_hash, user1_pkhash, get_nfts(5), user2_pkhash, get_nfts(5));
-    let lock_args = protocol::lock_args(lock_args_molecule);
+    let lock_args = protocol::lock_args(lock_args_molecule, vec![]);
 
     let lock_script = context
         .build_script(&out_point, Bytes::from(protocol::to_vec(&lock_args)))

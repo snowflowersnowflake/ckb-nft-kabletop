@@ -52,6 +52,23 @@ typedef struct
 #define _signature(k, io)      (uint8_t *)MolReader_Challenge_get_signature(&k->io##_challenge).ptr
 #define _round(k, io)                     MolReader_Challenge_get_round(&k->io##_challenge)
 
+uint8_t _lua_code_hashes_count(Kabletop *k)
+{
+    mol_seg_t hashes = MolReader_Args_get_lua_code_hashes(&k->args);
+	return (uint8_t)MolReader_Hashes_length(&hashes);
+}
+
+uint8_t * _lua_code_hash(Kabletop *k, uint8_t i)
+{
+    mol_seg_t hashes = MolReader_Args_get_lua_code_hashes(&k->args);
+	if (i < MolReader_Hashes_length(&hashes))
+	{
+		mol_seg_t hash =  MolReader_Hashes_get(&hashes, i).seg;
+		return (uint8_t *)hash.ptr;
+	}
+	return NULL;
+}
+
 uint8_t * _user1_nft(Kabletop *k, uint8_t i)
 {
     mol_seg_t nfts = MolReader_Args_get_user1_nfts(&k->args);
