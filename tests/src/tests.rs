@@ -208,7 +208,7 @@ fn test_success_origin_to_settlement() {
     let witnesses = vec![
         (&user2_privkey, get_round(1u8, vec!["ckb.debug('user1 draw one card, and spell it adding HP.')"])),
         (&user1_privkey, get_round(2u8, vec!["ckb.debug('user2 draw one card, and spell it to damage user1.')"])),
-        (&user2_privkey, get_round(1u8, vec!["ckb.debug('user1 draw one card, and use it to kill user2.')]"])),
+        (&user2_privkey, get_round(1u8, vec!["ckb.debug('user1 draw one card, and use it to kill user2.')"])),
         (&user1_privkey, get_round(2u8, vec!["ckb.debug('user2 draw one card, and put it onto battleground.')"])),
         (&user2_privkey, get_round(1u8, vec!["ckb.debug('user1 draw one card, and use it to kill user2.')"])),
         (&user1_privkey, end_round_bytes),
