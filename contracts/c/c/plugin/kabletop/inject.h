@@ -27,7 +27,7 @@ int inject_kabletop_functions(lua_State *L, int herr)
 
 	// load celldep code
 	const uint8_t prefix[] = "kabletop:";
-	const uint64_t psize = sizeof(prefix);
+	const uint64_t psize = sizeof(prefix) - 1;
 	for (size_t i = 0; 1; ++i)
 	{
 		uint8_t check[psize];

@@ -51,6 +51,14 @@ fn test_success_origin_to_challenge() {
     let secp256k1_data_dep = CellDep::new_builder()
         .out_point(secp256k1_data_out_point)
         .build();
+	let luacode_out_point = context.deploy_cell("kabletop:
+		function surrender(prefix)
+			print(prefix .. 'surrender the game')
+		end
+	".as_bytes().into());
+	let luacode_dep = CellDep::new_builder()
+		.out_point(luacode_out_point)
+		.build();
 
     // generate two users' privkey and pubkhash
     let (user1_privkey, user1_pkhash) = get_keypair();
@@ -112,7 +120,7 @@ fn test_success_origin_to_challenge() {
 		"])),
         (&user1_privkey, get_round(2u8, vec!["
 			print('用户2的回合：')
-			print('1.认输')
+			surrender('1.')
 			print('2.回合结束')
 		"])),
         (&user2_privkey, end_round_bytes),
@@ -128,6 +136,7 @@ fn test_success_origin_to_challenge() {
         .outputs_data(outputs_data.pack())
         .cell_dep(lock_script_dep)
         .cell_dep(secp256k1_data_dep)
+		.cell_dep(luacode_dep)
         .build();
     let tx = context.complete_tx(tx);
     let tx = sign_tx(tx, &user1_privkey, witnesses);
