@@ -8,7 +8,7 @@
 #include "molecule/types.h"
 
 #define MAX_SCRIPT_SIZE 32768
-#define MAX_LUACODE_SIZE 16384
+#define MAX_LUACODE_SIZE 32768
 #define MAX_ROUND_SIZE 2048
 #define MAX_CHALLENGE_DATA_SIZE 2048
 #define MAX_OPERATIONS_PER_ROUND 32
@@ -322,7 +322,16 @@ int verify_witnesses(Kabletop *kabletop, uint8_t witnesses[MAX_ROUND_COUNT][MAX_
             }
         }
         // fill round random seed from first 16 bytes of round signature
-        memcpy(kabletop->seeds[i].randomseed, signature_seg.ptr, sizeof(uint64_t) * 2);
+		if (i == 0)
+		{
+			mol_seg_t channel_hash_seg;
+			CHECK_RET(extract_witness_output_type(witness, len, &channel_hash_seg));
+			memcpy(kabletop->seeds[i].randomseed, channel_hash_seg.ptr, sizeof(uint64_t) * 2);
+		}
+		if (i + 1 < kabletop->round_count)
+		{
+			memcpy(kabletop->seeds[i + 1].randomseed, signature_seg.ptr, sizeof(uint64_t) * 2);
+		}
     }
     return CKB_SUCCESS;
 }

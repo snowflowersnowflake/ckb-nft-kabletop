@@ -73,6 +73,25 @@ int extract_witness_input_type(uint8_t *witness, uint64_t len,
   return CKB_SUCCESS;
 }
 
+/* Extract output_type from WitnessArgs */
+int extract_witness_output_type(uint8_t *witness, uint64_t len,
+                         mol_seg_t *output_type_bytes_seg) {
+  mol_seg_t witness_seg;
+  witness_seg.ptr = witness;
+  witness_seg.size = len;
+
+  if (MolReader_WitnessArgs_verify(&witness_seg, false) != MOL_OK) {
+    return ERROR_ENCODING;
+  }
+  mol_seg_t output_type_seg = MolReader_WitnessArgs_get_output_type(&witness_seg);
+
+  if (MolReader_BytesOpt_is_none(&output_type_seg)) {
+    return ERROR_ENCODING;
+  }
+  *output_type_bytes_seg = MolReader_Bytes_raw_bytes(&output_type_seg);
+  return CKB_SUCCESS;
+}
+
 void print_hex(const char *prefix, unsigned char *msg, int size) {
   char debug[1024] = "";
   char x[16];

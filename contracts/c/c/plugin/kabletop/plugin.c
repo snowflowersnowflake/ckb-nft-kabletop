@@ -4,12 +4,25 @@
 #include "core.h"
 #include <stdio.h>
 
+void hex(char *hex, unsigned char *bytes, int size) {
+	int pointer = 0;
+	char hex_char[16];
+	for (int i = 0; i < size; ++i)
+	{
+		sprintf(hex_char, "%02x", (int)bytes[i]);
+		memcpy(&hex[pointer], hex_char, strlen(hex_char));
+		pointer += strlen(hex_char);
+	}
+}
+
 void import_user_nft(Kabletop *k, lua_State *L, _USER_NFT_F _user_nft, const char *name)
 {
     lua_newtable(L);
     for (uint8_t i = 0; i < _user_deck_size(k); ++i)
     {
-        lua_pushlstring(L, (const char *)_user_nft(k, i), BLAKE160_SIZE);
+		char hash[BLAKE160_SIZE * 2 + 1] = "";
+		hex(hash, _user_nft(k, i), BLAKE160_SIZE);
+        lua_pushstring(L, hash);
         lua_rawseti(L, -2, i + 1);
     }
     lua_setglobal(L, name);
