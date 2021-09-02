@@ -82,7 +82,7 @@ uint8_t * _user1_nft(Kabletop *k, uint8_t i)
 
 uint8_t * _user2_nft(Kabletop *k, uint8_t i)
 {
-    mol_seg_t nfts = MolReader_Args_get_user1_nfts(&k->args);
+    mol_seg_t nfts = MolReader_Args_get_user2_nfts(&k->args);
     if (i < MolReader_nfts_length(&nfts))
     {
         mol_seg_res_t nft = MolReader_nfts_get(&nfts, i);
