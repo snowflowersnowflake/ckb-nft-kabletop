@@ -33,10 +33,13 @@ pub fn blake160(data: &[u8]) -> [u8; 20] {
 }
 
 #[allow(dead_code)]
-pub fn gen_witnesses_and_signature(script: &Script, ckb: u64, raw_witness: Vec<(&Privkey, Bytes)>) -> (Vec<WitnessArgs>, [u8; 65]) {
+pub fn gen_witnesses_and_signatures(
+	script: &Script, ckb: u64, raw_witness: Vec<(&Privkey, Bytes)>
+) -> (Vec<WitnessArgs>, Vec<[u8; 65]>) {
     let mut message = [0u8; 32];
     let mut witnesses = vec![];
     let mut signature = vec![];
+	let mut all_signatures = vec![];
     for i in 0..raw_witness.len() {
         let (privk, code) = &raw_witness[i];
         let mut blake2b = new_blake2b();
@@ -57,8 +60,14 @@ pub fn gen_witnesses_and_signature(script: &Script, ckb: u64, raw_witness: Vec<(
             .input_type(Some(code.clone()).pack())
             .build());
         signature = sig.serialize();
+		all_signatures.push(signature.clone().try_into().unwrap());
     }
-    (witnesses, signature.try_into().unwrap())
+	witnesses[0] = witnesses[0]
+		.clone()
+		.as_builder()
+		.output_type(Some(Bytes::from(blake2b_256([1]).to_vec())).pack())
+		.build();
+    (witnesses, all_signatures)
 }
 
 #[allow(dead_code)]

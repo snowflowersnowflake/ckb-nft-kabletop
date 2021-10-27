@@ -1,5 +1,5 @@
 use super::{
-    helper::{sign_tx, blake160, MAX_CYCLES, gen_witnesses_and_signature},
+    helper::{sign_tx, blake160, MAX_CYCLES, gen_witnesses_and_signatures},
     protocol,
     *,
 };
@@ -65,9 +65,6 @@ fn test_success_origin_to_challenge() {
     let (user1_privkey, user1_pkhash) = get_keypair();
     let (user2_privkey, user2_pkhash) = get_keypair();
 
-    // println!("user1_pkhash = {}", hex::encode(user1_pkhash));
-    // println!("user2_pkhash = {}", hex::encode(user2_pkhash));
-
     // prepare scripts
     let lock_args_molecule = (500u64, 5u8, 1024u64, blake2b_256([1]), user1_pkhash, get_nfts(5), user2_pkhash, get_nfts(5));
     let lock_args = protocol::lock_args(lock_args_molecule, vec![blake2b_256(luacode)]);
@@ -79,13 +76,52 @@ fn test_success_origin_to_challenge() {
         .out_point(out_point)
         .build();
 
+	let mut input_data = vec![];
+	// // uncomment to test challenge to challenge case
+    // let witnesses = vec![
+    //     (&user2_privkey, get_round(1u8, vec!["
+	// 		print('用户1的回合：')
+	// 		print('1.抽牌')
+	// 		print('2.回合结束')
+	// 	"])),
+    //     (&user1_privkey, get_round(2u8, vec!["
+	// 		print('用户2的回合：')
+	// 		print('1.抽牌')
+	// 		print('2.放置一张牌，跳过回合')
+	// 		print('3.回合结束')
+	// 	"])),
+    //     (&user2_privkey, get_round(1u8, vec!["
+	// 		print('用户1的回合：')
+	// 		print('abc123abc123abc123abc123abc123abc123abc123abc123')
+	// 		print('2.回合结束')
+	// 	"])),
+    //     (&user1_privkey, get_round(2u8, vec!["
+	// 		print('用户2的回合：')
+	// 		surrender('1.')
+	// 		print('2.回合结束')
+	// 	"]))
+    // ];
+	// let rounds = witnesses
+	// 	.iter()
+	// 	.map(|(_, round)| round.clone())
+	// 	.collect::<Vec<Bytes>>();
+    // let (_, signatures) = gen_witnesses_and_signatures(&lock_script, 2000u64, witnesses);
+	// let snapshot = rounds
+	// 	.into_iter()
+	// 	.enumerate()
+	// 	.map(|(i, round)| (round, signatures[i]))
+	// 	.collect::<Vec<_>>();
+    // let challenge = protocol::challenge(2, snapshot, vec![]);
+	// input_data = protocol::to_vec(&challenge);
+	// // uncomment to here
+
     // prepare cells
     let input_out_point = context.create_cell(
         CellOutput::new_builder()
             .capacity(2000u64.pack())
             .lock(lock_script.clone())
             .build(),
-        Bytes::new(),
+        Bytes::from(input_data),
     );
     let input = CellInput::new_builder()
         .previous_output(input_out_point)
@@ -115,7 +151,6 @@ fn test_success_origin_to_challenge() {
 		"])),
         (&user2_privkey, get_round(1u8, vec!["
 			print('用户1的回合：')
-			spell('用户1', '用户2', '36248218d2808d668ae3c0d35990c12712f6b9d2')
 			print('abc123abc123abc123abc123abc123abc123abc123abc123')
 			print('2.回合结束')
 		"])),
@@ -123,11 +158,20 @@ fn test_success_origin_to_challenge() {
 			print('用户2的回合：')
 			surrender('1.')
 			print('2.回合结束')
-		"])),
-        (&user2_privkey, end_round_bytes),
+		"]))
     ];
-    let (witnesses, signature) = gen_witnesses_and_signature(&lock_script, 2000u64, witnesses);
-    let challenge = protocol::challenge((witnesses.len() - 1) as u8, signature, end_round);
+	let rounds = witnesses
+		.iter()
+		.map(|(_, round)| round.clone())
+		.collect::<Vec<Bytes>>();
+    let (witnesses, signatures) = gen_witnesses_and_signatures(&lock_script, 2000u64, witnesses);
+	assert!(rounds.len() == signatures.len());
+	let snapshot = rounds
+		.into_iter()
+		.enumerate()
+		.map(|(i, round)| (round, signatures[i]))
+		.collect::<Vec<_>>();
+    let challenge = protocol::challenge(1, snapshot, vec!["print('user2 draw one card, and skip current round.')"]);
     let outputs_data = vec![Bytes::from(protocol::to_vec(&challenge))];
 
     // build transaction
@@ -223,7 +267,7 @@ fn test_success_origin_to_settlement() {
         (&user2_privkey, get_round(1u8, vec!["ckb.debug('user1 draw one card, and use it to kill user2.')"])),
         (&user1_privkey, end_round_bytes),
     ];
-    let (witnesses, _) = gen_witnesses_and_signature(&lock_script, 2000u64, witnesses);
+    let (witnesses, _) = gen_witnesses_and_signatures(&lock_script, 2000u64, witnesses);
     let outputs_data = vec![Bytes::new(), Bytes::new()];
 
     // build transaction
@@ -297,8 +341,18 @@ fn test_success_timeout_to_settlement() {
         (&user2_privkey, get_round(1u8, vec!["ckb.debug('user1 draw one card, and use it to kill user2.')"])),
         (&user1_privkey, end_round_bytes),
     ];
-    let (witnesses, signature) = gen_witnesses_and_signature(&lock_script, 2000u64, witnesses);
-    let challenge = protocol::challenge((witnesses.len() - 1) as u8, signature, end_round);
+	let rounds = witnesses
+		.iter()
+		.map(|(_, round)| round.clone())
+		.collect::<Vec<Bytes>>();
+    let (witnesses, signatures) = gen_witnesses_and_signatures(&lock_script, 2000u64, witnesses);
+	assert!(rounds.len() == signatures.len());
+	let snapshot = rounds
+		.into_iter()
+		.enumerate()
+		.map(|(i, round)| (round, signatures[i]))
+		.collect::<Vec<_>>();
+    let challenge = protocol::challenge(1, snapshot, vec![]);
 
     // prepare cells
     let input_out_point = context.create_cell(

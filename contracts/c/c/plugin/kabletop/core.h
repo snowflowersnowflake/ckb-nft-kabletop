@@ -11,7 +11,7 @@
 #define MAX_LUACODE_SIZE 32768
 #define MAX_ROUND_SIZE 2048
 #define MAX_CHALLENGE_DATA_SIZE 2048
-#define MAX_OPERATIONS_PER_ROUND 32
+#define MAX_OPERATIONS_PER_ROUND 64
 #define MAX_NFT_DATA_SIZE (BLAKE160_SIZE * 256)
 
 enum
@@ -93,9 +93,12 @@ MODE check_mode(Kabletop *kabletop, uint8_t challenge_data[2][MAX_CHALLENGE_DATA
     }
     if (find == 1)
     {
-        // ensure offset in output_challenge must be greator than the input's one
+        // ensure rounds snapshot offset in output_challenge must be greator than or equal to the input one
+		// and the challenger must be different as well
         if (len != MAX_CHALLENGE_DATA_SIZE
-            && _round_offset(kabletop, output) <= _round_offset(kabletop, input))
+            && _challenger(kabletop, output) != _challenger(kabletop, input)
+			&& _snapshot_position(kabletop, output) < _snapshot_position(kabletop, input)
+			&& kabletop->round_count < _snapshot_position(kabletop, output))
         {
             return MODE_UNKNOWN;
         }
@@ -103,34 +106,14 @@ MODE check_mode(Kabletop *kabletop, uint8_t challenge_data[2][MAX_CHALLENGE_DATA
     }
     else
     {
-        // ensure total round count from witnesses must be greator than the input's round offset
+        // ensure total round count from witnesses must be greator than or equal to the input one
         if (len != MAX_CHALLENGE_DATA_SIZE
-            && kabletop->round_count <= _round_offset(kabletop, input))
+            && kabletop->round_count < _snapshot_position(kabletop, input))
         {
             return MODE_UNKNOWN;
         }
         return MODE_SETTLEMENT;
     }
-}
-
-int check_round_signature(Kabletop *k, uint8_t round_offset, const uint8_t *expect_signature)
-{
-    uint64_t len = MAX_ROUND_SIZE;
-    uint8_t witness[MAX_ROUND_SIZE];
-    int ret = CKB_SUCCESS;
-    int offset = ckb_calculate_inputs_len();
-    CHECK_RET(ckb_load_witness(witness, &len, 0, offset + round_offset, CKB_SOURCE_INPUT));
-    if (len > MAX_ROUND_SIZE)
-    {
-        return ERROR_ENCODING;
-    }
-    mol_seg_t lock_seg;
-    CHECK_RET(extract_witness_lock(witness, len, &lock_seg));
-    if (memcmp(expect_signature, lock_seg.ptr, SIGNATURE_SIZE) != 0)
-    {
-        return KABLETOP_WRONG_ROUND_SIGNATURE;
-    }
-    return CKB_SUCCESS;
 }
 
 int check_result(Kabletop *kabletop, int winner, const uint64_t ckbs[3], MODE mode)
@@ -143,16 +126,15 @@ int check_result(Kabletop *kabletop, int winner, const uint64_t ckbs[3], MODE mo
     // check input SINCE wether matches the requirement when settling on no-winner result
     if (winner == 0 && mode == MODE_SETTLEMENT)
     {
-        uint8_t user_type = _input_challenge_user_type(kabletop);
-        if (user_type == 0 || user_type == kabletop->signer)
-        {
+		if (kabletop->input_challenge.ptr == NULL || _challenger(kabletop, input) != kabletop->signer)
+		{
             return KABLETOP_WRONG_BATTLE_RESULT;
-        }
+		}
         uint64_t since;
         uint64_t len = sizeof(uint64_t);
         ckb_load_input_by_field(&since, &len, 0, 0, CKB_SOURCE_GROUP_INPUT, CKB_INPUT_FIELD_SINCE);
         uint64_t blocknumber = _begin_blocknumber(kabletop);
-        uint64_t round_count = _round_offset(kabletop, input) + 1;
+        uint64_t round_count = _snapshot_position(kabletop, input);
         if (round_count > 30) round_count = 30;
         if (round_count < 5)  round_count = 5;
         if (since < blocknumber + round_count * round_count)
@@ -332,6 +314,8 @@ int verify_witnesses(Kabletop *kabletop, uint8_t witnesses[MAX_ROUND_COUNT][MAX_
 		{
 			memcpy(kabletop->seeds[i + 1].randomseed, signature_seg.ptr, sizeof(uint64_t) * 2);
 		}
+		// save signature segment to kabletop for verifying challenge mode
+		kabletop->signatures[i] = signature_seg;
     }
     return CKB_SUCCESS;
 }
@@ -393,16 +377,22 @@ int verify_settlement_mode(Kabletop *kabletop, uint64_t capacities[3])
 	// check challenge data matches current rounds if channel has been challenged before
 	if (kabletop->input_challenge.ptr)
 	{
-		uint8_t round_offset = _round_offset(kabletop, input);
-		int ret = check_round_signature(kabletop, round_offset, _signature(kabletop, input));
-		if (ret != CKB_SUCCESS)
+		// final kabletop round_count must be greator than previous challenge's
+		if (kabletop->round_count < _snapshot_position(kabletop, input))
 		{
 			return KABLETOP_SETTLEMENT_FORMAT_ERROR;
 		}
-		mol_seg_t round = kabletop->rounds[round_offset];
-		mol_seg_t challenge_round = _round(kabletop, input);
-		if (round.size != challenge_round.size
-			|| memcmp(round.ptr, challenge_round.ptr, round.size) != 0)
+		// check current rounds hash proof
+		blake2b_state hash;
+		blake2b_init(&hash, BLAKE2B_BLOCK_SIZE);
+		for (uint8_t i = 0; i < _snapshot_position(kabletop, input); ++i)
+		{
+			blake2b_update(&hash, kabletop->rounds[i].ptr, kabletop->rounds[i].size);
+			blake2b_update(&hash, kabletop->signatures[i].ptr, kabletop->signatures[i].size);
+		}
+		uint8_t hash_proof[BLAKE2B_BLOCK_SIZE];
+		blake2b_final(&hash, hash_proof, BLAKE2B_BLOCK_SIZE);
+		if (memcmp(hash_proof, _snapshot_hashproof(kabletop, input), BLAKE2B_BLOCK_SIZE) != 0)
 		{
 			return KABLETOP_SETTLEMENT_FORMAT_ERROR;
 		}
@@ -412,23 +402,46 @@ int verify_settlement_mode(Kabletop *kabletop, uint64_t capacities[3])
 
 int verify_challenge_mode(Kabletop *kabletop)
 {
-	uint8_t round_offset = kabletop->round_count - 1;
-    if (_round_offset(kabletop, output) != round_offset)
-    {
+	uint8_t challenger = _challenger(kabletop, output);
+	if (kabletop->signer != challenger)
+	{
         return KABLETOP_CHALLENGE_FORMAT_ERROR;
-    }
-    int ret = check_round_signature(kabletop, round_offset, _signature(kabletop, output));
-    if (ret != CKB_SUCCESS)
-    {
-        return KABLETOP_CHALLENGE_FORMAT_ERROR;
-    }
-    mol_seg_t last_round = kabletop->rounds[round_offset];
-    mol_seg_t challenge_round = _round(kabletop, output);
-    if (last_round.size != challenge_round.size
-        || memcmp(last_round.ptr, challenge_round.ptr, last_round.size) != 0)
-    {
-        return KABLETOP_CHALLENGE_FORMAT_ERROR;
-    }
+	}
+	// check hash proof of rounds and signatures in kabletop witness
+	blake2b_state hash;
+	blake2b_init(&hash, BLAKE2B_BLOCK_SIZE);
+	for (uint8_t i = 0; i < _snapshot_position(kabletop, output); ++i)
+	{
+		blake2b_update(&hash, kabletop->rounds[i].ptr, kabletop->rounds[i].size);
+		blake2b_update(&hash, kabletop->signatures[i].ptr, kabletop->signatures[i].size);
+	}
+	uint8_t hash_proof[BLAKE2B_BLOCK_SIZE];
+	blake2b_final(&hash, hash_proof, BLAKE2B_BLOCK_SIZE);
+	if (memcmp(hash_proof, _snapshot_hashproof(kabletop, output), BLAKE2B_BLOCK_SIZE) != 0)
+	{
+		return KABLETOP_CHALLENGE_FORMAT_ERROR;
+	}
+	// check wether operations in challenge can be empty
+	uint8_t snapshot_user_type = _user_type(kabletop, _snapshot_position(kabletop, output) - 1);
+	uint8_t pending_operations_count = _output_challenge_operations_count(kabletop);
+	if ((challenger == snapshot_user_type && pending_operations_count > 0)
+		|| (challenger != snapshot_user_type && pending_operations_count == 0))
+	{
+		return KABLETOP_CHALLENGE_FORMAT_ERROR;
+	}
+	// if input challenge has non-empty operations, they must be equal to the operations
+	// at snapshot position from kabletop rounds in bytes
+	if (kabletop->input_challenge.ptr && _input_challenge_operations_count(kabletop) > 0)
+	{
+		uint8_t i = _snapshot_position(kabletop, input) - 1;
+		mol_seg_t challenge_operations = MolReader_Challenge_get_operations(&kabletop->input_challenge);
+		mol_seg_t operations = MolReader_Round_get_operations(&kabletop->rounds[i]);
+		if (challenge_operations.size != operations.size
+			|| memcmp(challenge_operations.ptr, operations.ptr, operations.size) != 0)
+		{
+			return KABLETOP_CHALLENGE_FORMAT_ERROR;
+		}
+	}
     return CKB_SUCCESS;
 }
 

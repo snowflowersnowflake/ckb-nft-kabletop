@@ -1,7 +1,9 @@
 
 mod kabletop;
 use molecule::prelude::{Byte, Builder, Entity};
-
+use ckb_tool::{
+	ckb_hash::new_blake2b, ckb_types::bytes::Bytes
+};
 use kabletop::{Args, Round, Operations, Challenge};
 
 fn uint8_t(v: u8) -> kabletop::Uint8T {
@@ -31,14 +33,6 @@ fn blake256_t(v: [u8; 32]) -> kabletop::Blake256 {
         mol_bytes[i] = Byte::from(v[i]);
     }
     kabletop::Blake256Builder::default().set(mol_bytes).build()
-}
-
-fn witness_t(v: [u8; 65]) -> kabletop::Witness {
-    let mut mol_bytes: [Byte; 65] = [Byte::default(); 65];
-    for i in 0..65 {
-        mol_bytes[i] = Byte::from(v[i]);
-    }
-    kabletop::WitnessBuilder::default().set(mol_bytes).build()
 }
 
 fn nfts_t(v: Vec<[u8; 20]>) -> kabletop::Nfts {
@@ -94,11 +88,7 @@ pub fn lock_args(
 pub fn round(user_type: u8, operations: Vec<&str>) -> Round {
     let operations = operations
         .iter()
-        .map(|bytes| {
-			// println!("{}", bytes);
-			// println!("[code] = {}", hex::encode(bytes.as_bytes()));
-			bytes_t(bytes.as_bytes())
-		})
+        .map(|bytes| bytes_t(bytes.as_bytes()))
         .collect::<Vec<kabletop::Bytes>>();
     let operations = Operations::new_builder()
         .set(operations)
@@ -110,10 +100,25 @@ pub fn round(user_type: u8, operations: Vec<&str>) -> Round {
 }
 
 #[allow(dead_code)]
-pub fn challenge(offset: u8, signature: [u8; 65], data: Round) -> Challenge {
+pub fn challenge(challenger: u8, snapshot: Vec<(Bytes, [u8; 65])>, operations: Vec<&str>) -> Challenge {
+	let mut blake2b = new_blake2b();
+	for (round, signature) in &snapshot {
+		blake2b.update(round.to_vec().as_slice());
+		blake2b.update(signature);
+	}
+	let mut hash_proof = [0u8; 32];
+	blake2b.finalize(&mut hash_proof);
+    let operations = operations
+        .iter()
+        .map(|bytes| bytes_t(bytes.as_bytes()))
+        .collect::<Vec<kabletop::Bytes>>();
+    let operations = Operations::new_builder()
+        .set(operations)
+        .build();
     Challenge::new_builder()
-        .round_offset(uint8_t(offset))
-        .signature(witness_t(signature))
-        .round(data)
+        .challenger(uint8_t(challenger))
+        .snapshot_position(uint8_t(snapshot.len() as u8))
+		.snapshot_hashproof(blake256_t(hash_proof))
+		.operations(operations)
         .build()
 }

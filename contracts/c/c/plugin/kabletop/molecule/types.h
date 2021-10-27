@@ -31,6 +31,7 @@ typedef struct
     // from witnesses
     uint8_t round_count;
     mol_seg_t rounds[MAX_ROUND_COUNT];
+	mol_seg_t signatures[MAX_ROUND_COUNT];
 
     // from data
     mol_seg_t input_challenge;
@@ -41,16 +42,16 @@ typedef struct
     USER_TYPE signer;
 } Kabletop;
 
-#define _user_staking_ckb(k)  *(uint64_t *)MolReader_Args_get_user_staking_ckb(&k->args).ptr
-#define _user_deck_size(k)    *(uint8_t *)MolReader_Args_get_user_deck_size(&k->args).ptr
-#define _begin_blocknumber(k) *(uint64_t *)MolReader_Args_get_begin_blocknumber(&k->args).ptr
-#define _lock_code_hash(k)     (uint8_t *)MolReader_Args_get_lock_code_hash(&k->args).ptr
-#define _user1_pkhash(k)       (uint8_t *)MolReader_Args_get_user1_pkhash(&k->args).ptr
-#define _user2_pkhash(k)       (uint8_t *)MolReader_Args_get_user2_pkhash(&k->args).ptr
-#define _user_type(k, i)      *(uint8_t *)MolReader_Round_get_user_type(&k->rounds[i]).ptr
-#define _round_offset(k, io)  *(uint8_t *)MolReader_Challenge_get_round_offset(&k->io##_challenge).ptr
-#define _signature(k, io)      (uint8_t *)MolReader_Challenge_get_signature(&k->io##_challenge).ptr
-#define _round(k, io)                     MolReader_Challenge_get_round(&k->io##_challenge)
+#define _user_staking_ckb(k)       *(uint64_t *)MolReader_Args_get_user_staking_ckb(&k->args).ptr
+#define _user_deck_size(k)         *(uint8_t *)MolReader_Args_get_user_deck_size(&k->args).ptr
+#define _begin_blocknumber(k)      *(uint64_t *)MolReader_Args_get_begin_blocknumber(&k->args).ptr
+#define _lock_code_hash(k)          (uint8_t *)MolReader_Args_get_lock_code_hash(&k->args).ptr
+#define _user1_pkhash(k)            (uint8_t *)MolReader_Args_get_user1_pkhash(&k->args).ptr
+#define _user2_pkhash(k)            (uint8_t *)MolReader_Args_get_user2_pkhash(&k->args).ptr
+#define _user_type(k, i)           *(uint8_t *)MolReader_Round_get_user_type(&k->rounds[i]).ptr
+#define _challenger(k, io)         *(uint8_t *)MolReader_Challenge_get_challenger(&k->io##_challenge).ptr
+#define _snapshot_position(k, io)  *(uint8_t *)MolReader_Challenge_get_snapshot_position(&k->io##_challenge).ptr
+#define _snapshot_hashproof(k, io)  (uint8_t *)MolReader_Challenge_get_snapshot_hashproof(&k->io##_challenge).ptr
 
 uint8_t _lua_code_hashes_count(Kabletop *k)
 {
@@ -107,15 +108,16 @@ Operation _operation(Kabletop *k, uint8_t r, uint8_t i)
     return op;
 }
 
-uint8_t _input_challenge_user_type(Kabletop *k)
+uint8_t _input_challenge_operations_count(Kabletop *k)
 {
-    uint8_t user_type = 0;
-    if (k->input_challenge.ptr != NULL)
-    {
-        mol_seg_t round = _round(k, input);
-        user_type = *(uint8_t *)MolReader_Round_get_user_type(&round).ptr;
-    }
-    return user_type;
+	mol_seg_t operations = MolReader_Challenge_get_operations(&k->input_challenge);
+	return (uint8_t)MolReader_Operations_length(&operations);
+}
+
+uint8_t _output_challenge_operations_count(Kabletop *k)
+{
+	mol_seg_t operations = MolReader_Challenge_get_operations(&k->output_challenge);
+	return (uint8_t)MolReader_Operations_length(&operations);
 }
 
 typedef uint8_t * _USER_NFT_F(Kabletop *, uint8_t);
