@@ -252,14 +252,9 @@ int verify_witnesses(Kabletop *kabletop, uint8_t witnesses[MAX_ROUND_COUNT][MAX_
     len = BLAKE2B_BLOCK_SIZE;
     ckb_load_cell_by_field(lock_hash, &len, 0, 0, CKB_SOURCE_GROUP_INPUT, CKB_CELL_FIELD_LOCK_HASH);
 
-    uint64_t capacity = 0;
-    len = sizeof(uint64_t);
-    ckb_load_cell_by_field(&capacity, &len, 0, 0, CKB_SOURCE_GROUP_INPUT, CKB_CELL_FIELD_CAPACITY);
-
     blake2b_state blake2b_ctx;
     blake2b_init(&blake2b_ctx, BLAKE2B_BLOCK_SIZE);
     blake2b_update(&blake2b_ctx, lock_hash, BLAKE2B_BLOCK_SIZE);
-    blake2b_update(&blake2b_ctx, &capacity, sizeof(uint64_t));
 
     mol_seg_t signature_seg;
     uint8_t message[BLAKE2B_BLOCK_SIZE];
@@ -433,7 +428,7 @@ int verify_challenge_mode(Kabletop *kabletop)
 	// at snapshot position from kabletop rounds in bytes
 	if (kabletop->input_challenge.ptr && _input_challenge_operations_count(kabletop) > 0)
 	{
-		uint8_t i = _snapshot_position(kabletop, input) - 1;
+		uint8_t i = _snapshot_position(kabletop, input);
 		mol_seg_t challenge_operations = MolReader_Challenge_get_operations(&kabletop->input_challenge);
 		mol_seg_t operations = MolReader_Round_get_operations(&kabletop->rounds[i]);
 		if (challenge_operations.size != operations.size

@@ -45,7 +45,7 @@ pub fn gen_witnesses_and_signatures(
         let mut blake2b = new_blake2b();
         if i == 0 {
             blake2b.update(&script.calc_script_hash().raw_data());
-            blake2b.update(&ckb.to_le_bytes());
+            // blake2b.update(&ckb.to_le_bytes());
         } else {
             blake2b.update(&message);
             blake2b.update(&signature);
