@@ -87,6 +87,72 @@ extern "C" {
 #define                                 MolReader_blake256_get_nth29(s)                 mol_slice_by_offset(s, 29, 1)
 #define                                 MolReader_blake256_get_nth30(s)                 mol_slice_by_offset(s, 30, 1)
 #define                                 MolReader_blake256_get_nth31(s)                 mol_slice_by_offset(s, 31, 1)
+#define                                 MolReader_signature_verify(s, c)                mol_verify_fixed_size(s, 65)
+#define                                 MolReader_signature_get_nth0(s)                 mol_slice_by_offset(s, 0, 1)
+#define                                 MolReader_signature_get_nth1(s)                 mol_slice_by_offset(s, 1, 1)
+#define                                 MolReader_signature_get_nth2(s)                 mol_slice_by_offset(s, 2, 1)
+#define                                 MolReader_signature_get_nth3(s)                 mol_slice_by_offset(s, 3, 1)
+#define                                 MolReader_signature_get_nth4(s)                 mol_slice_by_offset(s, 4, 1)
+#define                                 MolReader_signature_get_nth5(s)                 mol_slice_by_offset(s, 5, 1)
+#define                                 MolReader_signature_get_nth6(s)                 mol_slice_by_offset(s, 6, 1)
+#define                                 MolReader_signature_get_nth7(s)                 mol_slice_by_offset(s, 7, 1)
+#define                                 MolReader_signature_get_nth8(s)                 mol_slice_by_offset(s, 8, 1)
+#define                                 MolReader_signature_get_nth9(s)                 mol_slice_by_offset(s, 9, 1)
+#define                                 MolReader_signature_get_nth10(s)                mol_slice_by_offset(s, 10, 1)
+#define                                 MolReader_signature_get_nth11(s)                mol_slice_by_offset(s, 11, 1)
+#define                                 MolReader_signature_get_nth12(s)                mol_slice_by_offset(s, 12, 1)
+#define                                 MolReader_signature_get_nth13(s)                mol_slice_by_offset(s, 13, 1)
+#define                                 MolReader_signature_get_nth14(s)                mol_slice_by_offset(s, 14, 1)
+#define                                 MolReader_signature_get_nth15(s)                mol_slice_by_offset(s, 15, 1)
+#define                                 MolReader_signature_get_nth16(s)                mol_slice_by_offset(s, 16, 1)
+#define                                 MolReader_signature_get_nth17(s)                mol_slice_by_offset(s, 17, 1)
+#define                                 MolReader_signature_get_nth18(s)                mol_slice_by_offset(s, 18, 1)
+#define                                 MolReader_signature_get_nth19(s)                mol_slice_by_offset(s, 19, 1)
+#define                                 MolReader_signature_get_nth20(s)                mol_slice_by_offset(s, 20, 1)
+#define                                 MolReader_signature_get_nth21(s)                mol_slice_by_offset(s, 21, 1)
+#define                                 MolReader_signature_get_nth22(s)                mol_slice_by_offset(s, 22, 1)
+#define                                 MolReader_signature_get_nth23(s)                mol_slice_by_offset(s, 23, 1)
+#define                                 MolReader_signature_get_nth24(s)                mol_slice_by_offset(s, 24, 1)
+#define                                 MolReader_signature_get_nth25(s)                mol_slice_by_offset(s, 25, 1)
+#define                                 MolReader_signature_get_nth26(s)                mol_slice_by_offset(s, 26, 1)
+#define                                 MolReader_signature_get_nth27(s)                mol_slice_by_offset(s, 27, 1)
+#define                                 MolReader_signature_get_nth28(s)                mol_slice_by_offset(s, 28, 1)
+#define                                 MolReader_signature_get_nth29(s)                mol_slice_by_offset(s, 29, 1)
+#define                                 MolReader_signature_get_nth30(s)                mol_slice_by_offset(s, 30, 1)
+#define                                 MolReader_signature_get_nth31(s)                mol_slice_by_offset(s, 31, 1)
+#define                                 MolReader_signature_get_nth32(s)                mol_slice_by_offset(s, 32, 1)
+#define                                 MolReader_signature_get_nth33(s)                mol_slice_by_offset(s, 33, 1)
+#define                                 MolReader_signature_get_nth34(s)                mol_slice_by_offset(s, 34, 1)
+#define                                 MolReader_signature_get_nth35(s)                mol_slice_by_offset(s, 35, 1)
+#define                                 MolReader_signature_get_nth36(s)                mol_slice_by_offset(s, 36, 1)
+#define                                 MolReader_signature_get_nth37(s)                mol_slice_by_offset(s, 37, 1)
+#define                                 MolReader_signature_get_nth38(s)                mol_slice_by_offset(s, 38, 1)
+#define                                 MolReader_signature_get_nth39(s)                mol_slice_by_offset(s, 39, 1)
+#define                                 MolReader_signature_get_nth40(s)                mol_slice_by_offset(s, 40, 1)
+#define                                 MolReader_signature_get_nth41(s)                mol_slice_by_offset(s, 41, 1)
+#define                                 MolReader_signature_get_nth42(s)                mol_slice_by_offset(s, 42, 1)
+#define                                 MolReader_signature_get_nth43(s)                mol_slice_by_offset(s, 43, 1)
+#define                                 MolReader_signature_get_nth44(s)                mol_slice_by_offset(s, 44, 1)
+#define                                 MolReader_signature_get_nth45(s)                mol_slice_by_offset(s, 45, 1)
+#define                                 MolReader_signature_get_nth46(s)                mol_slice_by_offset(s, 46, 1)
+#define                                 MolReader_signature_get_nth47(s)                mol_slice_by_offset(s, 47, 1)
+#define                                 MolReader_signature_get_nth48(s)                mol_slice_by_offset(s, 48, 1)
+#define                                 MolReader_signature_get_nth49(s)                mol_slice_by_offset(s, 49, 1)
+#define                                 MolReader_signature_get_nth50(s)                mol_slice_by_offset(s, 50, 1)
+#define                                 MolReader_signature_get_nth51(s)                mol_slice_by_offset(s, 51, 1)
+#define                                 MolReader_signature_get_nth52(s)                mol_slice_by_offset(s, 52, 1)
+#define                                 MolReader_signature_get_nth53(s)                mol_slice_by_offset(s, 53, 1)
+#define                                 MolReader_signature_get_nth54(s)                mol_slice_by_offset(s, 54, 1)
+#define                                 MolReader_signature_get_nth55(s)                mol_slice_by_offset(s, 55, 1)
+#define                                 MolReader_signature_get_nth56(s)                mol_slice_by_offset(s, 56, 1)
+#define                                 MolReader_signature_get_nth57(s)                mol_slice_by_offset(s, 57, 1)
+#define                                 MolReader_signature_get_nth58(s)                mol_slice_by_offset(s, 58, 1)
+#define                                 MolReader_signature_get_nth59(s)                mol_slice_by_offset(s, 59, 1)
+#define                                 MolReader_signature_get_nth60(s)                mol_slice_by_offset(s, 60, 1)
+#define                                 MolReader_signature_get_nth61(s)                mol_slice_by_offset(s, 61, 1)
+#define                                 MolReader_signature_get_nth62(s)                mol_slice_by_offset(s, 62, 1)
+#define                                 MolReader_signature_get_nth63(s)                mol_slice_by_offset(s, 63, 1)
+#define                                 MolReader_signature_get_nth64(s)                mol_slice_by_offset(s, 64, 1)
 #define                                 MolReader_nfts_verify(s, c)                     mol_fixvec_verify(s, 20)
 #define                                 MolReader_nfts_length(s)                        mol_fixvec_length(s)
 #define                                 MolReader_nfts_get(s, i)                        mol_fixvec_slice_by_index(s, 20, i)
@@ -119,11 +185,12 @@ MOLECULE_API_DECORATOR  mol_errno       MolReader_Args_verify                   
 #define                                 MolReader_Args_get_user2_nfts(s)                mol_table_slice_by_index(s, 8)
 MOLECULE_API_DECORATOR  mol_errno       MolReader_Challenge_verify                      (const mol_seg_t*, bool);
 #define                                 MolReader_Challenge_actual_field_count(s)       mol_table_actual_field_count(s)
-#define                                 MolReader_Challenge_has_extra_fields(s)         mol_table_has_extra_fields(s, 4)
+#define                                 MolReader_Challenge_has_extra_fields(s)         mol_table_has_extra_fields(s, 5)
 #define                                 MolReader_Challenge_get_challenger(s)           mol_table_slice_by_index(s, 0)
 #define                                 MolReader_Challenge_get_snapshot_position(s)    mol_table_slice_by_index(s, 1)
 #define                                 MolReader_Challenge_get_snapshot_hashproof(s)   mol_table_slice_by_index(s, 2)
-#define                                 MolReader_Challenge_get_operations(s)           mol_table_slice_by_index(s, 3)
+#define                                 MolReader_Challenge_get_snapshot_signature(s)   mol_table_slice_by_index(s, 3)
+#define                                 MolReader_Challenge_get_operations(s)           mol_table_slice_by_index(s, 4)
 
 /*
  * Builder APIs
@@ -202,6 +269,74 @@ MOLECULE_API_DECORATOR  mol_errno       MolReader_Challenge_verify              
 #define                                 MolBuilder_blake256_set_nth31(b, p)             mol_builder_set_byte_by_offset(b, 31, p)
 #define                                 MolBuilder_blake256_build(b)                    mol_builder_finalize_simple(b)
 #define                                 MolBuilder_blake256_clear(b)                    mol_builder_discard(b)
+#define                                 MolBuilder_signature_init(b)                    mol_builder_initialize_fixed_size(b, 65)
+#define                                 MolBuilder_signature_set_nth0(b, p)             mol_builder_set_byte_by_offset(b, 0, p)
+#define                                 MolBuilder_signature_set_nth1(b, p)             mol_builder_set_byte_by_offset(b, 1, p)
+#define                                 MolBuilder_signature_set_nth2(b, p)             mol_builder_set_byte_by_offset(b, 2, p)
+#define                                 MolBuilder_signature_set_nth3(b, p)             mol_builder_set_byte_by_offset(b, 3, p)
+#define                                 MolBuilder_signature_set_nth4(b, p)             mol_builder_set_byte_by_offset(b, 4, p)
+#define                                 MolBuilder_signature_set_nth5(b, p)             mol_builder_set_byte_by_offset(b, 5, p)
+#define                                 MolBuilder_signature_set_nth6(b, p)             mol_builder_set_byte_by_offset(b, 6, p)
+#define                                 MolBuilder_signature_set_nth7(b, p)             mol_builder_set_byte_by_offset(b, 7, p)
+#define                                 MolBuilder_signature_set_nth8(b, p)             mol_builder_set_byte_by_offset(b, 8, p)
+#define                                 MolBuilder_signature_set_nth9(b, p)             mol_builder_set_byte_by_offset(b, 9, p)
+#define                                 MolBuilder_signature_set_nth10(b, p)            mol_builder_set_byte_by_offset(b, 10, p)
+#define                                 MolBuilder_signature_set_nth11(b, p)            mol_builder_set_byte_by_offset(b, 11, p)
+#define                                 MolBuilder_signature_set_nth12(b, p)            mol_builder_set_byte_by_offset(b, 12, p)
+#define                                 MolBuilder_signature_set_nth13(b, p)            mol_builder_set_byte_by_offset(b, 13, p)
+#define                                 MolBuilder_signature_set_nth14(b, p)            mol_builder_set_byte_by_offset(b, 14, p)
+#define                                 MolBuilder_signature_set_nth15(b, p)            mol_builder_set_byte_by_offset(b, 15, p)
+#define                                 MolBuilder_signature_set_nth16(b, p)            mol_builder_set_byte_by_offset(b, 16, p)
+#define                                 MolBuilder_signature_set_nth17(b, p)            mol_builder_set_byte_by_offset(b, 17, p)
+#define                                 MolBuilder_signature_set_nth18(b, p)            mol_builder_set_byte_by_offset(b, 18, p)
+#define                                 MolBuilder_signature_set_nth19(b, p)            mol_builder_set_byte_by_offset(b, 19, p)
+#define                                 MolBuilder_signature_set_nth20(b, p)            mol_builder_set_byte_by_offset(b, 20, p)
+#define                                 MolBuilder_signature_set_nth21(b, p)            mol_builder_set_byte_by_offset(b, 21, p)
+#define                                 MolBuilder_signature_set_nth22(b, p)            mol_builder_set_byte_by_offset(b, 22, p)
+#define                                 MolBuilder_signature_set_nth23(b, p)            mol_builder_set_byte_by_offset(b, 23, p)
+#define                                 MolBuilder_signature_set_nth24(b, p)            mol_builder_set_byte_by_offset(b, 24, p)
+#define                                 MolBuilder_signature_set_nth25(b, p)            mol_builder_set_byte_by_offset(b, 25, p)
+#define                                 MolBuilder_signature_set_nth26(b, p)            mol_builder_set_byte_by_offset(b, 26, p)
+#define                                 MolBuilder_signature_set_nth27(b, p)            mol_builder_set_byte_by_offset(b, 27, p)
+#define                                 MolBuilder_signature_set_nth28(b, p)            mol_builder_set_byte_by_offset(b, 28, p)
+#define                                 MolBuilder_signature_set_nth29(b, p)            mol_builder_set_byte_by_offset(b, 29, p)
+#define                                 MolBuilder_signature_set_nth30(b, p)            mol_builder_set_byte_by_offset(b, 30, p)
+#define                                 MolBuilder_signature_set_nth31(b, p)            mol_builder_set_byte_by_offset(b, 31, p)
+#define                                 MolBuilder_signature_set_nth32(b, p)            mol_builder_set_byte_by_offset(b, 32, p)
+#define                                 MolBuilder_signature_set_nth33(b, p)            mol_builder_set_byte_by_offset(b, 33, p)
+#define                                 MolBuilder_signature_set_nth34(b, p)            mol_builder_set_byte_by_offset(b, 34, p)
+#define                                 MolBuilder_signature_set_nth35(b, p)            mol_builder_set_byte_by_offset(b, 35, p)
+#define                                 MolBuilder_signature_set_nth36(b, p)            mol_builder_set_byte_by_offset(b, 36, p)
+#define                                 MolBuilder_signature_set_nth37(b, p)            mol_builder_set_byte_by_offset(b, 37, p)
+#define                                 MolBuilder_signature_set_nth38(b, p)            mol_builder_set_byte_by_offset(b, 38, p)
+#define                                 MolBuilder_signature_set_nth39(b, p)            mol_builder_set_byte_by_offset(b, 39, p)
+#define                                 MolBuilder_signature_set_nth40(b, p)            mol_builder_set_byte_by_offset(b, 40, p)
+#define                                 MolBuilder_signature_set_nth41(b, p)            mol_builder_set_byte_by_offset(b, 41, p)
+#define                                 MolBuilder_signature_set_nth42(b, p)            mol_builder_set_byte_by_offset(b, 42, p)
+#define                                 MolBuilder_signature_set_nth43(b, p)            mol_builder_set_byte_by_offset(b, 43, p)
+#define                                 MolBuilder_signature_set_nth44(b, p)            mol_builder_set_byte_by_offset(b, 44, p)
+#define                                 MolBuilder_signature_set_nth45(b, p)            mol_builder_set_byte_by_offset(b, 45, p)
+#define                                 MolBuilder_signature_set_nth46(b, p)            mol_builder_set_byte_by_offset(b, 46, p)
+#define                                 MolBuilder_signature_set_nth47(b, p)            mol_builder_set_byte_by_offset(b, 47, p)
+#define                                 MolBuilder_signature_set_nth48(b, p)            mol_builder_set_byte_by_offset(b, 48, p)
+#define                                 MolBuilder_signature_set_nth49(b, p)            mol_builder_set_byte_by_offset(b, 49, p)
+#define                                 MolBuilder_signature_set_nth50(b, p)            mol_builder_set_byte_by_offset(b, 50, p)
+#define                                 MolBuilder_signature_set_nth51(b, p)            mol_builder_set_byte_by_offset(b, 51, p)
+#define                                 MolBuilder_signature_set_nth52(b, p)            mol_builder_set_byte_by_offset(b, 52, p)
+#define                                 MolBuilder_signature_set_nth53(b, p)            mol_builder_set_byte_by_offset(b, 53, p)
+#define                                 MolBuilder_signature_set_nth54(b, p)            mol_builder_set_byte_by_offset(b, 54, p)
+#define                                 MolBuilder_signature_set_nth55(b, p)            mol_builder_set_byte_by_offset(b, 55, p)
+#define                                 MolBuilder_signature_set_nth56(b, p)            mol_builder_set_byte_by_offset(b, 56, p)
+#define                                 MolBuilder_signature_set_nth57(b, p)            mol_builder_set_byte_by_offset(b, 57, p)
+#define                                 MolBuilder_signature_set_nth58(b, p)            mol_builder_set_byte_by_offset(b, 58, p)
+#define                                 MolBuilder_signature_set_nth59(b, p)            mol_builder_set_byte_by_offset(b, 59, p)
+#define                                 MolBuilder_signature_set_nth60(b, p)            mol_builder_set_byte_by_offset(b, 60, p)
+#define                                 MolBuilder_signature_set_nth61(b, p)            mol_builder_set_byte_by_offset(b, 61, p)
+#define                                 MolBuilder_signature_set_nth62(b, p)            mol_builder_set_byte_by_offset(b, 62, p)
+#define                                 MolBuilder_signature_set_nth63(b, p)            mol_builder_set_byte_by_offset(b, 63, p)
+#define                                 MolBuilder_signature_set_nth64(b, p)            mol_builder_set_byte_by_offset(b, 64, p)
+#define                                 MolBuilder_signature_build(b)                   mol_builder_finalize_simple(b)
+#define                                 MolBuilder_signature_clear(b)                   mol_builder_discard(b)
 #define                                 MolBuilder_nfts_init(b)                         mol_fixvec_builder_initialize(b, 512)
 #define                                 MolBuilder_nfts_push(b, p)                      mol_fixvec_builder_push(b, p, 20)
 #define                                 MolBuilder_nfts_build(b)                        mol_fixvec_builder_finalize(b)
@@ -235,11 +370,12 @@ MOLECULE_API_DECORATOR  mol_seg_res_t   MolBuilder_Round_build                  
 #define                                 MolBuilder_Args_set_user2_nfts(b, p, l)         mol_table_builder_add(b, 8, p, l)
 MOLECULE_API_DECORATOR  mol_seg_res_t   MolBuilder_Args_build                           (mol_builder_t);
 #define                                 MolBuilder_Args_clear(b)                        mol_builder_discard(b)
-#define                                 MolBuilder_Challenge_init(b)                    mol_table_builder_initialize(b, 256, 4)
+#define                                 MolBuilder_Challenge_init(b)                    mol_table_builder_initialize(b, 512, 5)
 #define                                 MolBuilder_Challenge_set_challenger(b, p, l)    mol_table_builder_add(b, 0, p, l)
 #define                                 MolBuilder_Challenge_set_snapshot_position(b, p, l) mol_table_builder_add(b, 1, p, l)
 #define                                 MolBuilder_Challenge_set_snapshot_hashproof(b, p, l) mol_table_builder_add(b, 2, p, l)
-#define                                 MolBuilder_Challenge_set_operations(b, p, l)    mol_table_builder_add(b, 3, p, l)
+#define                                 MolBuilder_Challenge_set_snapshot_signature(b, p, l) mol_table_builder_add(b, 3, p, l)
+#define                                 MolBuilder_Challenge_set_operations(b, p, l)    mol_table_builder_add(b, 4, p, l)
 MOLECULE_API_DECORATOR  mol_seg_res_t   MolBuilder_Challenge_build                      (mol_builder_t);
 #define                                 MolBuilder_Challenge_clear(b)                   mol_builder_discard(b)
 
@@ -261,6 +397,14 @@ MOLECULE_API_DECORATOR const uint8_t MolDefault_blake256[32]     =  {
     ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
     ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
     ____, ____, ____, ____, ____, ____, ____, ____,
+};
+MOLECULE_API_DECORATOR const uint8_t MolDefault_signature[65]    =  {
+    ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+    ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+    ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+    ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+    ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+    ____, ____, ____, ____, ____,
 };
 MOLECULE_API_DECORATOR const uint8_t MolDefault_nfts[4]          =  {____, ____, ____, ____};
 MOLECULE_API_DECORATOR const uint8_t MolDefault_bytes[4]         =  {____, ____, ____, ____};
@@ -284,12 +428,18 @@ MOLECULE_API_DECORATOR const uint8_t MolDefault_Args[141]        =  {
     ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
     ____, ____, ____, ____, ____, ____, ____, ____, ____,
 };
-MOLECULE_API_DECORATOR const uint8_t MolDefault_Challenge[58]    =  {
-    0x3a, ____, ____, ____, 0x14, ____, ____, ____, 0x15, ____, ____, ____,
-    0x16, ____, ____, ____, 0x36, ____, ____, ____, ____, ____, ____, ____,
+MOLECULE_API_DECORATOR const uint8_t MolDefault_Challenge[127]   =  {
+    0x7f, ____, ____, ____, 0x18, ____, ____, ____, 0x19, ____, ____, ____,
+    0x1a, ____, ____, ____, 0x3a, ____, ____, ____, 0x7b, ____, ____, ____,
     ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
     ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
-    ____, ____, ____, ____, ____, ____, 0x04, ____, ____, ____,
+    ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+    ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+    ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+    ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+    ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+    ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
+    ____, ____, ____, 0x04, ____, ____, ____,
 };
 
 #undef ____
@@ -516,9 +666,9 @@ MOLECULE_API_DECORATOR mol_errno MolReader_Challenge_verify (const mol_seg_t *in
         return MOL_ERR_OFFSET;
     }
     mol_num_t field_count = offset / 4 - 1;
-    if (field_count < 4) {
+    if (field_count < 5) {
         return MOL_ERR_FIELD_COUNT;
-    } else if (!compatible && field_count > 4) {
+    } else if (!compatible && field_count > 5) {
         return MOL_ERR_FIELD_COUNT;
     }
     if (input->size < MOL_NUM_T_SIZE*(field_count+1)){
@@ -559,6 +709,12 @@ MOLECULE_API_DECORATOR mol_errno MolReader_Challenge_verify (const mol_seg_t *in
         }
         inner.ptr = input->ptr + offsets[3];
         inner.size = offsets[4] - offsets[3];
+        errno = MolReader_signature_verify(&inner, compatible);
+        if (errno != MOL_OK) {
+            return MOL_ERR_DATA;
+        }
+        inner.ptr = input->ptr + offsets[4];
+        inner.size = offsets[5] - offsets[4];
         errno = MolReader_Operations_verify(&inner, compatible);
         if (errno != MOL_OK) {
             return MOL_ERR_DATA;
@@ -766,7 +922,7 @@ MOLECULE_API_DECORATOR mol_seg_res_t MolBuilder_Args_build (mol_builder_t builde
 MOLECULE_API_DECORATOR mol_seg_res_t MolBuilder_Challenge_build (mol_builder_t builder) {
     mol_seg_res_t res;
     res.errno = MOL_OK;
-    mol_num_t offset = 20;
+    mol_num_t offset = 24;
     mol_num_t len;
     res.seg.size = offset;
     len = builder.number_ptr[1];
@@ -776,6 +932,8 @@ MOLECULE_API_DECORATOR mol_seg_res_t MolBuilder_Challenge_build (mol_builder_t b
     len = builder.number_ptr[5];
     res.seg.size += len == 0 ? 32 : len;
     len = builder.number_ptr[7];
+    res.seg.size += len == 0 ? 65 : len;
+    len = builder.number_ptr[9];
     res.seg.size += len == 0 ? 4 : len;
     res.seg.ptr = (uint8_t*)malloc(res.seg.size);
     uint8_t *dst = res.seg.ptr;
@@ -796,6 +954,10 @@ MOLECULE_API_DECORATOR mol_seg_res_t MolBuilder_Challenge_build (mol_builder_t b
     mol_pack_number(dst, &offset);
     dst += MOL_NUM_T_SIZE;
     len = builder.number_ptr[7];
+    offset += len == 0 ? 65 : len;
+    mol_pack_number(dst, &offset);
+    dst += MOL_NUM_T_SIZE;
+    len = builder.number_ptr[9];
     offset += len == 0 ? 4 : len;
     uint8_t *src = builder.data_ptr;
     len = builder.number_ptr[1];
@@ -827,10 +989,19 @@ MOLECULE_API_DECORATOR mol_seg_res_t MolBuilder_Challenge_build (mol_builder_t b
     dst += len;
     len = builder.number_ptr[7];
     if (len == 0) {
+        len = 65;
+        memcpy(dst, &MolDefault_signature, len);
+    } else {
+        mol_num_t of = builder.number_ptr[6];
+        memcpy(dst, src+of, len);
+    }
+    dst += len;
+    len = builder.number_ptr[9];
+    if (len == 0) {
         len = 4;
         memcpy(dst, &MolDefault_Operations, len);
     } else {
-        mol_num_t of = builder.number_ptr[6];
+        mol_num_t of = builder.number_ptr[8];
         memcpy(dst, src+of, len);
     }
     dst += len;

@@ -35,6 +35,14 @@ fn blake256_t(v: [u8; 32]) -> kabletop::Blake256 {
     kabletop::Blake256Builder::default().set(mol_bytes).build()
 }
 
+fn signature_t(v: [u8; 65]) -> kabletop::Signature {
+	let mut mol_bytes: [Byte; 65] = [Byte::default(); 65];
+	for i in 0..65 {
+        mol_bytes[i] = Byte::from(v[i]);
+	}
+    kabletop::SignatureBuilder::default().set(mol_bytes).build()
+}
+
 fn nfts_t(v: Vec<[u8; 20]>) -> kabletop::Nfts {
     let blake160s = v
         .into_iter()
@@ -119,6 +127,7 @@ pub fn challenge(challenger: u8, snapshot: Vec<(Bytes, [u8; 65])>, operations: V
         .challenger(uint8_t(challenger))
         .snapshot_position(uint8_t(snapshot.len() as u8))
 		.snapshot_hashproof(blake256_t(hash_proof))
+		.snapshot_signature(signature_t(snapshot.last().unwrap().1))
 		.operations(operations)
         .build()
 }

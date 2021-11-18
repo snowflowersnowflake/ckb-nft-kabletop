@@ -416,6 +416,12 @@ int verify_challenge_mode(Kabletop *kabletop)
 	{
 		return KABLETOP_CHALLENGE_FORMAT_ERROR;
 	}
+	// check signature samilarity between signature in challenge and the other in witness
+	uint8_t spi = _snapshot_position(kabletop, output) - 1;
+	if (memcmp(kabletop->signatures[spi].ptr, _snapshot_signature(kabletop, output), SIGNATURE_SIZE) != 0)
+	{
+		return KABLETOP_CHALLENGE_FORMAT_ERROR;
+	}
 	// check wether operations in challenge can be empty
 	uint8_t snapshot_user_type = _user_type(kabletop, _snapshot_position(kabletop, output) - 1);
 	uint8_t pending_operations_count = _output_challenge_operations_count(kabletop);
