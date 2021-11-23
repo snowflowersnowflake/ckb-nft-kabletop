@@ -53,6 +53,7 @@ typedef struct
 #define _snapshot_position(k, io)  *(uint8_t *)MolReader_Challenge_get_snapshot_position(&k->io##_challenge).ptr
 #define _snapshot_hashproof(k, io)  (uint8_t *)MolReader_Challenge_get_snapshot_hashproof(&k->io##_challenge).ptr
 #define _snapshot_signature(k, io)  (uint8_t *)MolReader_Challenge_get_snapshot_signature(&k->io##_challenge).ptr
+#define _challenge_count(k, io)    *(uint8_t *)MolReader_Challenge_get_count(&k->io##_challenge).ptr
 
 uint8_t _lua_code_hashes_count(Kabletop *k)
 {

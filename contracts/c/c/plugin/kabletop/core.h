@@ -13,6 +13,7 @@
 #define MAX_CHALLENGE_DATA_SIZE 2048
 #define MAX_OPERATIONS_PER_ROUND 64
 #define MAX_NFT_DATA_SIZE (BLAKE160_SIZE * 256)
+#define TO_CAPACITY(x) (x * 100000000)
 
 enum
 {
@@ -96,9 +97,10 @@ MODE check_mode(Kabletop *kabletop, uint8_t challenge_data[2][MAX_CHALLENGE_DATA
         // ensure rounds snapshot offset in output_challenge must be greator than or equal to the input one
 		// and the challenger must be different as well
         if (len != MAX_CHALLENGE_DATA_SIZE
-            && _challenger(kabletop, output) != _challenger(kabletop, input)
-			&& _snapshot_position(kabletop, output) < _snapshot_position(kabletop, input)
-			&& kabletop->round_count < _snapshot_position(kabletop, output))
+            && (_challenger(kabletop, output) != _challenger(kabletop, input)
+                || _challenge_count(kabletop, output) != _challenge_count(kabletop, input) + 1
+			    || _snapshot_position(kabletop, output) < _snapshot_position(kabletop, input)
+			    || kabletop->round_count < _snapshot_position(kabletop, output)))
         {
             return MODE_UNKNOWN;
         }
@@ -135,21 +137,32 @@ int check_result(Kabletop *kabletop, int winner, const uint64_t ckbs[3], MODE mo
         ckb_load_input_by_field(&since, &len, 0, 0, CKB_SOURCE_GROUP_INPUT, CKB_INPUT_FIELD_SINCE);
         uint64_t blocknumber = _begin_blocknumber(kabletop);
         uint64_t round_count = _snapshot_position(kabletop, input);
-        if (round_count > 30) round_count = 30;
-        if (round_count < 5)  round_count = 5;
-        if (since < blocknumber + round_count * round_count)
+        uint64_t challenge_count = _challenge_count(kabletop, input);
+        // every round would let both of users to wait 50 blocks to finish challenge
+        if (since < blocknumber + challenge_count * 150 + round_count * 50)
         {
             return KABLETOP_WRONG_SINCE;
         }
         winner = kabletop->signer;
     }
 
+    // remove challenge ckb from users capacity
+    if (kabletop->input_challenge.ptr)
+    {
+        uint64_t challenge_ckb = TO_CAPACITY(kabletop->input_challenge.size);
+        switch (_challenger(kabletop, input))
+        {
+            case USER_1: user1_ckb -= challenge_ckb; break;
+            case USER_2: user2_ckb -= challenge_ckb; break;
+        }
+    }
+
+    // check winner capacity status
     switch (winner)
     {
         // user1 is winner
         case USER_1: 
         {
-            ckb_debug("winner = user1");
             if (user1_ckb - user2_ckb > funding_ckb - staking_ckb * 2
                 || user1_ckb + user2_ckb < staking_ckb * 2)
             {
@@ -160,7 +173,6 @@ int check_result(Kabletop *kabletop, int winner, const uint64_t ckbs[3], MODE mo
         // user2 is winner
         case USER_2:
         {
-            ckb_debug("winner = user2");
             if (user2_ckb - user1_ckb > funding_ckb - staking_ckb * 2
                 || user2_ckb + user1_ckb < staking_ckb * 2)
             {
@@ -432,17 +444,61 @@ int verify_challenge_mode(Kabletop *kabletop)
 	}
 	// if input challenge has non-empty operations, they must be equal to the operations
 	// at snapshot position from kabletop rounds in bytes
-	if (kabletop->input_challenge.ptr && _input_challenge_operations_count(kabletop) > 0)
+	if (kabletop->input_challenge.ptr)
 	{
-		uint8_t i = _snapshot_position(kabletop, input);
-		mol_seg_t challenge_operations = MolReader_Challenge_get_operations(&kabletop->input_challenge);
-		mol_seg_t operations = MolReader_Round_get_operations(&kabletop->rounds[i]);
-		if (challenge_operations.size != operations.size
-			|| memcmp(challenge_operations.ptr, operations.ptr, operations.size) != 0)
-		{
-			return KABLETOP_CHALLENGE_FORMAT_ERROR;
-		}
+        if (_input_challenge_operations_count(kabletop) > 0)
+        {
+            uint8_t i = _snapshot_position(kabletop, input);
+            mol_seg_t challenge_operations = MolReader_Challenge_get_operations(&kabletop->input_challenge);
+            mol_seg_t operations = MolReader_Round_get_operations(&kabletop->rounds[i]);
+            if (challenge_operations.size != operations.size
+                || memcmp(challenge_operations.ptr, operations.ptr, operations.size) != 0)
+            {
+                return KABLETOP_CHALLENGE_FORMAT_ERROR;
+            }
+        }
+        // check the challenger has payed back ckb which equals to input_challenge data size to last challenger
+        uint64_t ckb;
+        uint64_t len = sizeof(uint64_t);
+        for (size_t i = 0; 1; ++i)
+        {
+            int ret = ckb_load_cell_by_field(&ckb, &len, 0, i, CKB_SOURCE_OUTPUT, CKB_CELL_FIELD_CAPACITY);
+            if (ret != CKB_SUCCESS)
+            {
+                return KABLETOP_CHALLENGE_FORMAT_ERROR;
+            }
+            if (TO_CAPACITY(kabletop->input_challenge.size) == ckb)
+            {
+                uint8_t lock_script[MAX_SCRIPT_SIZE];
+                len = MAX_SCRIPT_SIZE;
+                ckb_load_cell_by_field(lock_script, &len, 0, i, CKB_SOURCE_OUTPUT, CKB_CELL_FIELD_LOCK);
+                mol_seg_t script;
+                script.ptr = lock_script;
+                script.size = len;
+                mol_seg_t code_hash = MolReader_Script_get_code_hash(&script);
+                // check code_hash
+                if (code_hash.size != BLAKE2B_BLOCK_SIZE
+                    || memcmp(code_hash.ptr, _lock_code_hash(kabletop), BLAKE2B_BLOCK_SIZE) != 0)
+                {
+                    return KABLETOP_CHALLENGE_FORMAT_ERROR;
+                }
+                // check lock_args which presents user_pkhash
+                mol_seg_t lock_args = MolReader_Script_get_args(&script);
+                lock_args = MolReader_Bytes_raw_bytes(&lock_args);
+                uint8_t user_type = _challenger(kabletop, input);
+                if ((user_type == USER_1 && memcmp(lock_args.ptr, _user1_pkhash(kabletop), BLAKE160_SIZE) != 0)
+                    || (user_type == USER_2 && memcmp(lock_args.ptr, _user2_pkhash(kabletop), BLAKE160_SIZE) != 0))
+                {
+                    return KABLETOP_CHALLENGE_FORMAT_ERROR;
+                }
+                break
+            }
+        }
 	}
+    else if (_challenge_count(kabletop, output) != 1)
+    {
+        return KABLETOP_CHALLENGE_FORMAT_ERROR;
+    }
     return CKB_SUCCESS;
 }
 
