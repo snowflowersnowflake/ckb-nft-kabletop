@@ -185,12 +185,13 @@ MOLECULE_API_DECORATOR  mol_errno       MolReader_Args_verify                   
 #define                                 MolReader_Args_get_user2_nfts(s)                mol_table_slice_by_index(s, 8)
 MOLECULE_API_DECORATOR  mol_errno       MolReader_Challenge_verify                      (const mol_seg_t*, bool);
 #define                                 MolReader_Challenge_actual_field_count(s)       mol_table_actual_field_count(s)
-#define                                 MolReader_Challenge_has_extra_fields(s)         mol_table_has_extra_fields(s, 5)
-#define                                 MolReader_Challenge_get_challenger(s)           mol_table_slice_by_index(s, 0)
-#define                                 MolReader_Challenge_get_snapshot_position(s)    mol_table_slice_by_index(s, 1)
-#define                                 MolReader_Challenge_get_snapshot_hashproof(s)   mol_table_slice_by_index(s, 2)
-#define                                 MolReader_Challenge_get_snapshot_signature(s)   mol_table_slice_by_index(s, 3)
-#define                                 MolReader_Challenge_get_operations(s)           mol_table_slice_by_index(s, 4)
+#define                                 MolReader_Challenge_has_extra_fields(s)         mol_table_has_extra_fields(s, 6)
+#define                                 MolReader_Challenge_get_count(s)                mol_table_slice_by_index(s, 0)
+#define                                 MolReader_Challenge_get_challenger(s)           mol_table_slice_by_index(s, 1)
+#define                                 MolReader_Challenge_get_snapshot_position(s)    mol_table_slice_by_index(s, 2)
+#define                                 MolReader_Challenge_get_snapshot_hashproof(s)   mol_table_slice_by_index(s, 3)
+#define                                 MolReader_Challenge_get_snapshot_signature(s)   mol_table_slice_by_index(s, 4)
+#define                                 MolReader_Challenge_get_operations(s)           mol_table_slice_by_index(s, 5)
 
 /*
  * Builder APIs
@@ -370,12 +371,13 @@ MOLECULE_API_DECORATOR  mol_seg_res_t   MolBuilder_Round_build                  
 #define                                 MolBuilder_Args_set_user2_nfts(b, p, l)         mol_table_builder_add(b, 8, p, l)
 MOLECULE_API_DECORATOR  mol_seg_res_t   MolBuilder_Args_build                           (mol_builder_t);
 #define                                 MolBuilder_Args_clear(b)                        mol_builder_discard(b)
-#define                                 MolBuilder_Challenge_init(b)                    mol_table_builder_initialize(b, 512, 5)
-#define                                 MolBuilder_Challenge_set_challenger(b, p, l)    mol_table_builder_add(b, 0, p, l)
-#define                                 MolBuilder_Challenge_set_snapshot_position(b, p, l) mol_table_builder_add(b, 1, p, l)
-#define                                 MolBuilder_Challenge_set_snapshot_hashproof(b, p, l) mol_table_builder_add(b, 2, p, l)
-#define                                 MolBuilder_Challenge_set_snapshot_signature(b, p, l) mol_table_builder_add(b, 3, p, l)
-#define                                 MolBuilder_Challenge_set_operations(b, p, l)    mol_table_builder_add(b, 4, p, l)
+#define                                 MolBuilder_Challenge_init(b)                    mol_table_builder_initialize(b, 1024, 6)
+#define                                 MolBuilder_Challenge_set_count(b, p, l)         mol_table_builder_add(b, 0, p, l)
+#define                                 MolBuilder_Challenge_set_challenger(b, p, l)    mol_table_builder_add(b, 1, p, l)
+#define                                 MolBuilder_Challenge_set_snapshot_position(b, p, l) mol_table_builder_add(b, 2, p, l)
+#define                                 MolBuilder_Challenge_set_snapshot_hashproof(b, p, l) mol_table_builder_add(b, 3, p, l)
+#define                                 MolBuilder_Challenge_set_snapshot_signature(b, p, l) mol_table_builder_add(b, 4, p, l)
+#define                                 MolBuilder_Challenge_set_operations(b, p, l)    mol_table_builder_add(b, 5, p, l)
 MOLECULE_API_DECORATOR  mol_seg_res_t   MolBuilder_Challenge_build                      (mol_builder_t);
 #define                                 MolBuilder_Challenge_clear(b)                   mol_builder_discard(b)
 
@@ -428,9 +430,10 @@ MOLECULE_API_DECORATOR const uint8_t MolDefault_Args[141]        =  {
     ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
     ____, ____, ____, ____, ____, ____, ____, ____, ____,
 };
-MOLECULE_API_DECORATOR const uint8_t MolDefault_Challenge[127]   =  {
-    0x7f, ____, ____, ____, 0x18, ____, ____, ____, 0x19, ____, ____, ____,
-    0x1a, ____, ____, ____, 0x3a, ____, ____, ____, 0x7b, ____, ____, ____,
+MOLECULE_API_DECORATOR const uint8_t MolDefault_Challenge[132]   =  {
+    0x84, ____, ____, ____, 0x1c, ____, ____, ____, 0x1d, ____, ____, ____,
+    0x1e, ____, ____, ____, 0x1f, ____, ____, ____, 0x3f, ____, ____, ____,
+    0x80, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
     ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
     ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
     ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
@@ -438,8 +441,7 @@ MOLECULE_API_DECORATOR const uint8_t MolDefault_Challenge[127]   =  {
     ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
     ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
     ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
-    ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____, ____,
-    ____, ____, ____, 0x04, ____, ____, ____,
+    ____, ____, ____, ____, ____, ____, ____, ____, 0x04, ____, ____, ____,
 };
 
 #undef ____
@@ -666,9 +668,9 @@ MOLECULE_API_DECORATOR mol_errno MolReader_Challenge_verify (const mol_seg_t *in
         return MOL_ERR_OFFSET;
     }
     mol_num_t field_count = offset / 4 - 1;
-    if (field_count < 5) {
+    if (field_count < 6) {
         return MOL_ERR_FIELD_COUNT;
-    } else if (!compatible && field_count > 5) {
+    } else if (!compatible && field_count > 6) {
         return MOL_ERR_FIELD_COUNT;
     }
     if (input->size < MOL_NUM_T_SIZE*(field_count+1)){
@@ -703,18 +705,24 @@ MOLECULE_API_DECORATOR mol_errno MolReader_Challenge_verify (const mol_seg_t *in
         }
         inner.ptr = input->ptr + offsets[2];
         inner.size = offsets[3] - offsets[2];
-        errno = MolReader_blake256_verify(&inner, compatible);
+        errno = MolReader_uint8_t_verify(&inner, compatible);
         if (errno != MOL_OK) {
             return MOL_ERR_DATA;
         }
         inner.ptr = input->ptr + offsets[3];
         inner.size = offsets[4] - offsets[3];
-        errno = MolReader_signature_verify(&inner, compatible);
+        errno = MolReader_blake256_verify(&inner, compatible);
         if (errno != MOL_OK) {
             return MOL_ERR_DATA;
         }
         inner.ptr = input->ptr + offsets[4];
         inner.size = offsets[5] - offsets[4];
+        errno = MolReader_signature_verify(&inner, compatible);
+        if (errno != MOL_OK) {
+            return MOL_ERR_DATA;
+        }
+        inner.ptr = input->ptr + offsets[5];
+        inner.size = offsets[6] - offsets[5];
         errno = MolReader_Operations_verify(&inner, compatible);
         if (errno != MOL_OK) {
             return MOL_ERR_DATA;
@@ -922,7 +930,7 @@ MOLECULE_API_DECORATOR mol_seg_res_t MolBuilder_Args_build (mol_builder_t builde
 MOLECULE_API_DECORATOR mol_seg_res_t MolBuilder_Challenge_build (mol_builder_t builder) {
     mol_seg_res_t res;
     res.errno = MOL_OK;
-    mol_num_t offset = 24;
+    mol_num_t offset = 28;
     mol_num_t len;
     res.seg.size = offset;
     len = builder.number_ptr[1];
@@ -930,10 +938,12 @@ MOLECULE_API_DECORATOR mol_seg_res_t MolBuilder_Challenge_build (mol_builder_t b
     len = builder.number_ptr[3];
     res.seg.size += len == 0 ? 1 : len;
     len = builder.number_ptr[5];
-    res.seg.size += len == 0 ? 32 : len;
+    res.seg.size += len == 0 ? 1 : len;
     len = builder.number_ptr[7];
-    res.seg.size += len == 0 ? 65 : len;
+    res.seg.size += len == 0 ? 32 : len;
     len = builder.number_ptr[9];
+    res.seg.size += len == 0 ? 65 : len;
+    len = builder.number_ptr[11];
     res.seg.size += len == 0 ? 4 : len;
     res.seg.ptr = (uint8_t*)malloc(res.seg.size);
     uint8_t *dst = res.seg.ptr;
@@ -950,14 +960,18 @@ MOLECULE_API_DECORATOR mol_seg_res_t MolBuilder_Challenge_build (mol_builder_t b
     mol_pack_number(dst, &offset);
     dst += MOL_NUM_T_SIZE;
     len = builder.number_ptr[5];
-    offset += len == 0 ? 32 : len;
+    offset += len == 0 ? 1 : len;
     mol_pack_number(dst, &offset);
     dst += MOL_NUM_T_SIZE;
     len = builder.number_ptr[7];
-    offset += len == 0 ? 65 : len;
+    offset += len == 0 ? 32 : len;
     mol_pack_number(dst, &offset);
     dst += MOL_NUM_T_SIZE;
     len = builder.number_ptr[9];
+    offset += len == 0 ? 65 : len;
+    mol_pack_number(dst, &offset);
+    dst += MOL_NUM_T_SIZE;
+    len = builder.number_ptr[11];
     offset += len == 0 ? 4 : len;
     uint8_t *src = builder.data_ptr;
     len = builder.number_ptr[1];
@@ -980,8 +994,8 @@ MOLECULE_API_DECORATOR mol_seg_res_t MolBuilder_Challenge_build (mol_builder_t b
     dst += len;
     len = builder.number_ptr[5];
     if (len == 0) {
-        len = 32;
-        memcpy(dst, &MolDefault_blake256, len);
+        len = 1;
+        memcpy(dst, &MolDefault_uint8_t, len);
     } else {
         mol_num_t of = builder.number_ptr[4];
         memcpy(dst, src+of, len);
@@ -989,8 +1003,8 @@ MOLECULE_API_DECORATOR mol_seg_res_t MolBuilder_Challenge_build (mol_builder_t b
     dst += len;
     len = builder.number_ptr[7];
     if (len == 0) {
-        len = 65;
-        memcpy(dst, &MolDefault_signature, len);
+        len = 32;
+        memcpy(dst, &MolDefault_blake256, len);
     } else {
         mol_num_t of = builder.number_ptr[6];
         memcpy(dst, src+of, len);
@@ -998,10 +1012,19 @@ MOLECULE_API_DECORATOR mol_seg_res_t MolBuilder_Challenge_build (mol_builder_t b
     dst += len;
     len = builder.number_ptr[9];
     if (len == 0) {
+        len = 65;
+        memcpy(dst, &MolDefault_signature, len);
+    } else {
+        mol_num_t of = builder.number_ptr[8];
+        memcpy(dst, src+of, len);
+    }
+    dst += len;
+    len = builder.number_ptr[11];
+    if (len == 0) {
         len = 4;
         memcpy(dst, &MolDefault_Operations, len);
     } else {
-        mol_num_t of = builder.number_ptr[8];
+        mol_num_t of = builder.number_ptr[10];
         memcpy(dst, src+of, len);
     }
     dst += len;

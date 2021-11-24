@@ -13,7 +13,7 @@
 #define MAX_CHALLENGE_DATA_SIZE 2048
 #define MAX_OPERATIONS_PER_ROUND 64
 #define MAX_NFT_DATA_SIZE (BLAKE160_SIZE * 256)
-#define TO_CAPACITY(x) (x * 100000000)
+#define TO_CAPACITY(x) (x * 100000000lu)
 
 enum
 {
@@ -96,8 +96,8 @@ MODE check_mode(Kabletop *kabletop, uint8_t challenge_data[2][MAX_CHALLENGE_DATA
     {
         // ensure rounds snapshot offset in output_challenge must be greator than or equal to the input one
 		// and the challenger must be different as well
-        if (len != MAX_CHALLENGE_DATA_SIZE
-            && (_challenger(kabletop, output) != _challenger(kabletop, input)
+        if (kabletop->input_challenge.ptr
+            && (_challenger(kabletop, output) == _challenger(kabletop, input)
                 || _challenge_count(kabletop, output) != _challenge_count(kabletop, input) + 1
 			    || _snapshot_position(kabletop, output) < _snapshot_position(kabletop, input)
 			    || kabletop->round_count < _snapshot_position(kabletop, output)))
@@ -109,7 +109,7 @@ MODE check_mode(Kabletop *kabletop, uint8_t challenge_data[2][MAX_CHALLENGE_DATA
     else
     {
         // ensure total round count from witnesses must be greator than or equal to the input one
-        if (len != MAX_CHALLENGE_DATA_SIZE
+        if (kabletop->input_challenge.ptr
             && kabletop->round_count < _snapshot_position(kabletop, input))
         {
             return MODE_UNKNOWN;
@@ -124,6 +124,7 @@ int check_result(Kabletop *kabletop, int winner, const uint64_t ckbs[3], MODE mo
     uint64_t user2_ckb   = ckbs[USER_2];
     uint64_t funding_ckb = ckbs[USER_KABLETOP];
     uint64_t staking_ckb = _user_staking_ckb(kabletop);
+	uint64_t bet_ckb     = (funding_ckb - staking_ckb * 2) / 2;
 
     // check input SINCE wether matches the requirement when settling on no-winner result
     if (winner == 0 && mode == MODE_SETTLEMENT)
@@ -139,7 +140,7 @@ int check_result(Kabletop *kabletop, int winner, const uint64_t ckbs[3], MODE mo
         uint64_t round_count = _snapshot_position(kabletop, input);
         uint64_t challenge_count = _challenge_count(kabletop, input);
         // every round would let both of users to wait 50 blocks to finish challenge
-        if (since < blocknumber + challenge_count * 150 + round_count * 50)
+        if (since < blocknumber + challenge_count * 125 + round_count * 30)
         {
             return KABLETOP_WRONG_SINCE;
         }
@@ -163,8 +164,7 @@ int check_result(Kabletop *kabletop, int winner, const uint64_t ckbs[3], MODE mo
         // user1 is winner
         case USER_1: 
         {
-            if (user1_ckb - user2_ckb > funding_ckb - staking_ckb * 2
-                || user1_ckb + user2_ckb < staking_ckb * 2)
+            if (user1_ckb - user2_ckb > bet_ckb * 2 || user1_ckb + user2_ckb < staking_ckb * 2)
             {
                 return KABLETOP_RESULT_FORMAT_ERROR;
             }
@@ -173,8 +173,7 @@ int check_result(Kabletop *kabletop, int winner, const uint64_t ckbs[3], MODE mo
         // user2 is winner
         case USER_2:
         {
-            if (user2_ckb - user1_ckb > funding_ckb - staking_ckb * 2
-                || user2_ckb + user1_ckb < staking_ckb * 2)
+            if (user2_ckb - user1_ckb > bet_ckb * 2 || user2_ckb + user1_ckb < staking_ckb * 2)
             {
                 return KABLETOP_RESULT_FORMAT_ERROR;
             }
@@ -491,7 +490,7 @@ int verify_challenge_mode(Kabletop *kabletop)
                 {
                     return KABLETOP_CHALLENGE_FORMAT_ERROR;
                 }
-                break
+                break;
             }
         }
 	}

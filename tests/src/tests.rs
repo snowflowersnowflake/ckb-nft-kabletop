@@ -13,8 +13,8 @@ use ckb_tool::{
     ckb_hash::blake2b_256,
     ckb_types::{
         bytes::Bytes,
-        core::{TransactionBuilder},
-        packed::{CellDep, CellOutput, CellInput},
+        core::{TransactionBuilder, Capacity},
+        packed::{CellDep, CellOutput, CellInput, Script},
         prelude::*,
     },
 };
@@ -77,43 +77,43 @@ fn test_success_origin_to_challenge() {
         .build();
 
 	let mut input_data = vec![];
-	// // uncomment to test challenge to challenge case
-    // let witnesses = vec![
-    //     (&user2_privkey, get_round(1u8, vec!["
-	// 		print('用户1的回合：')
-	// 		print('1.抽牌')
-	// 		print('2.回合结束')
-	// 	"])),
-    //     (&user1_privkey, get_round(2u8, vec!["
-	// 		print('用户2的回合：')
-	// 		print('1.抽牌')
-	// 		print('2.放置一张牌，跳过回合')
-	// 		print('3.回合结束')
-	// 	"])),
-    //     (&user2_privkey, get_round(1u8, vec!["
-	// 		print('用户1的回合：')
-	// 		print('abc123abc123abc123abc123abc123abc123abc123abc123')
-	// 		print('2.回合结束')
-	// 	"])),
-    //     (&user1_privkey, get_round(2u8, vec!["
-	// 		print('用户2的回合：')
-	// 		surrender('1.')
-	// 		print('2.回合结束')
-	// 	"]))
-    // ];
-	// let rounds = witnesses
-	// 	.iter()
-	// 	.map(|(_, round)| round.clone())
-	// 	.collect::<Vec<Bytes>>();
-    // let (_, signatures) = gen_witnesses_and_signatures(&lock_script, 2000u64, witnesses);
-	// let snapshot = rounds
-	// 	.into_iter()
-	// 	.enumerate()
-	// 	.map(|(i, round)| (round, signatures[i]))
-	// 	.collect::<Vec<_>>();
-    // let challenge = protocol::challenge(2, snapshot, vec![]);
-	// input_data = protocol::to_vec(&challenge);
-	// // uncomment to here
+	// uncomment to test challenge to challenge case
+    let witnesses = vec![
+        (&user2_privkey, get_round(1u8, vec!["
+			print('用户1的回合：')
+			print('1.抽牌')
+			print('2.回合结束')
+		"])),
+        (&user1_privkey, get_round(2u8, vec!["
+			print('用户2的回合：')
+			print('1.抽牌')
+			print('2.放置一张牌，跳过回合')
+			print('3.回合结束')
+		"])),
+        (&user2_privkey, get_round(1u8, vec!["
+			print('用户1的回合：')
+			print('abc123abc123abc123abc123abc123abc123abc123abc123')
+			print('2.回合结束')
+		"])),
+        (&user1_privkey, get_round(2u8, vec!["
+			print('用户2的回合：')
+			surrender('1.')
+			print('2.回合结束')
+		"]))
+    ];
+	let rounds = witnesses
+		.iter()
+		.map(|(_, round)| round.clone())
+		.collect::<Vec<Bytes>>();
+    let (_, signatures) = gen_witnesses_and_signatures(&lock_script, 2000u64, witnesses);
+	let snapshot = rounds
+		.into_iter()
+		.enumerate()
+		.map(|(i, round)| (round, signatures[i]))
+		.collect::<Vec<_>>();
+    let challenge = protocol::challenge(2, 1, snapshot, vec![]);
+	input_data = protocol::to_vec(&challenge);
+	// uncomment to here
 
     // prepare cells
     let input_out_point = context.create_cell(
@@ -121,7 +121,7 @@ fn test_success_origin_to_challenge() {
             .capacity(2000u64.pack())
             .lock(lock_script.clone())
             .build(),
-        Bytes::from(input_data),
+        Bytes::from(input_data.clone()),
     );
     let input = CellInput::new_builder()
         .previous_output(input_out_point)
@@ -130,6 +130,7 @@ fn test_success_origin_to_challenge() {
         .capacity(2000u64.pack())
         .lock(lock_script.clone())
         .build();
+	let mut outputs = vec![output];
 
     // prepare witnesses
     let end_round = protocol::round(1u8, vec![
@@ -171,13 +172,26 @@ fn test_success_origin_to_challenge() {
 		.enumerate()
 		.map(|(i, round)| (round, signatures[i]))
 		.collect::<Vec<_>>();
-    let challenge = protocol::challenge(1, snapshot, vec!["print('user2 draw one card, and skip current round.')"]);
-    let outputs_data = vec![Bytes::from(protocol::to_vec(&challenge))];
+    let challenge = protocol::challenge(1, 2, snapshot, vec!["print('user2 draw one card, and skip current round.')"]);
+    let mut outputs_data = vec![Bytes::from(protocol::to_vec(&challenge))];
+
+	// uncomment to test from challenge to challenge
+	let payback_lock = Script::new_builder()
+		.code_hash(blake2b_256([1]).pack())
+		.args(Bytes::from(user2_pkhash.to_vec()).pack())
+		.build();
+	let payback_output = CellOutput::new_builder()
+		.capacity(Capacity::bytes(input_data.len()).unwrap().pack())
+		.lock(payback_lock)
+		.build();
+	outputs.push(payback_output);
+	outputs_data.push(Bytes::default());
+	// uncomment to here
 
     // build transaction
     let tx = TransactionBuilder::default()
         .input(input)
-        .output(output)
+        .outputs(outputs)
         .outputs_data(outputs_data.pack())
         .cell_dep(lock_script_dep)
         .cell_dep(secp256k1_data_dep)
@@ -311,7 +325,7 @@ fn test_success_timeout_to_settlement() {
 
     // prepare scripts
     let code_hash: [u8; 32] = blake2b_256(ALWAYS_SUCCESS.to_vec());
-    let lock_args_molecule = (500u64, 5u8, 10000u64, code_hash, user1_pkhash, get_nfts(5), user2_pkhash, get_nfts(5));
+    let lock_args_molecule = (500u64, 5u8, 10000u64, code_hash.clone(), user1_pkhash, get_nfts(5), user2_pkhash, get_nfts(5));
     let lock_args = protocol::lock_args(lock_args_molecule, vec![]);
 
     let lock_script = context
@@ -352,7 +366,9 @@ fn test_success_timeout_to_settlement() {
 		.enumerate()
 		.map(|(i, round)| (round, signatures[i]))
 		.collect::<Vec<_>>();
-    let challenge = protocol::challenge(1, snapshot, vec![]);
+    let challenge = protocol::challenge(1, 1, snapshot, vec![]);
+	let challenge_data = protocol::to_vec(&challenge);
+	let extra_ckb = Capacity::bytes(challenge_data.len()).unwrap().as_u64();
 
     // prepare cells
     let input_out_point = context.create_cell(
@@ -360,15 +376,15 @@ fn test_success_timeout_to_settlement() {
             .capacity(2000u64.pack())
             .lock(lock_script.clone())
             .build(),
-        Bytes::from(protocol::to_vec(&challenge)),
+        Bytes::from(challenge_data),
     );
     let input = CellInput::new_builder()
         .previous_output(input_out_point)
-        .since(10036u64.pack())
+        .since(11036u64.pack())
         .build();
     let outputs = vec![
         CellOutput::new_builder()
-            .capacity(1500.pack())
+            .capacity((1500 + extra_ckb).pack())
             .lock(user1_always_success_script.clone())
             .build(),
         CellOutput::new_builder()

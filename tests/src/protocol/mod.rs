@@ -108,7 +108,7 @@ pub fn round(user_type: u8, operations: Vec<&str>) -> Round {
 }
 
 #[allow(dead_code)]
-pub fn challenge(challenger: u8, snapshot: Vec<(Bytes, [u8; 65])>, operations: Vec<&str>) -> Challenge {
+pub fn challenge(challenger: u8, count: u8, snapshot: Vec<(Bytes, [u8; 65])>, operations: Vec<&str>) -> Challenge {
 	let mut blake2b = new_blake2b();
 	for (round, signature) in &snapshot {
 		blake2b.update(round.to_vec().as_slice());
@@ -124,6 +124,7 @@ pub fn challenge(challenger: u8, snapshot: Vec<(Bytes, [u8; 65])>, operations: V
         .set(operations)
         .build();
     Challenge::new_builder()
+		.count(uint8_t(count))
         .challenger(uint8_t(challenger))
         .snapshot_position(uint8_t(snapshot.len() as u8))
 		.snapshot_hashproof(blake256_t(hash_proof))
